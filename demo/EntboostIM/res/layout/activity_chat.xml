@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/chat_bg_default"
+        android:orientation="vertical" >
+
+        <ListView
+            android:id="@+id/mListView"
+            android:layout_width="fill_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1"
+            android:divider="@color/gray_white"
+            android:footerDividersEnabled="false"
+            android:stackFromBottom="true" 
+            android:cacheColorHint="#00000000">
+        </ListView>
+
+        <LinearLayout
+            android:id="@+id/chatFooterLayout"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/chat_footer_gray"
+            android:orientation="horizontal" >
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="horizontal" >
+
+                <ImageButton
+                    android:id="@+id/voiceBtn"
+                    android:layout_width="45dip"
+                    android:layout_height="45dip"
+                    android:background="@drawable/button_selector_chat_voice"
+                    android:gravity="center_horizontal|center_vertical"
+                    android:scaleType="fitCenter" 
+                    />
+                <ImageButton
+                    android:id="@+id/keyBtn"
+                    android:layout_width="40dip"
+                    android:layout_height="40dip"
+                    android:layout_gravity="center"
+                    android:background="@drawable/keyboard_btn"
+                    android:gravity="center_horizontal|center_vertical"
+                    android:scaleType="fitCenter" 
+                    android:visibility="gone"/>
+
+            </LinearLayout>
+
+            <RelativeLayout
+                android:id="@+id/contentLayout"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:paddingBottom="3dip"
+                android:paddingTop="3dip" 
+                >
+
+                <EditText
+                    android:id="@+id/content"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/edit_selector_chat"
+                    android:minHeight="42dip"
+                    android:singleLine="false"
+                    android:textColor="@color/gray"
+                    android:textSize="15sp" />
+
+                <ImageButton
+                    android:id="@+id/emotionBtn"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/emotion" />
+
+            </RelativeLayout>
+            
+            <RelativeLayout
+                android:id="@+id/voiceBtnLayout"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:paddingBottom="3dip"
+                android:paddingTop="3dip" 
+                android:visibility="gone">
+
+                <Button
+                    android:id="@+id/voicesendBtn"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:text="按住说话"
+                    android:background="@drawable/btn_style_white" />
+
+            </RelativeLayout>
+
+            <ImageButton
+                android:id="@+id/picBtn"
+                android:layout_width="45dip"
+                android:layout_height="45dip"
+                android:background="@drawable/button_selector_pic"
+                android:gravity="center_horizontal|center_vertical"
+                android:scaleType="fitCenter" />
+
+            <Button
+                android:id="@+id/sendBtn"
+                android:layout_width="50dip"
+                android:layout_height="42dip"
+                android:layout_gravity="center"
+                android:layout_marginLeft="3dip"
+                android:layout_marginRight="3dip"
+                android:background="@drawable/button_selector_gray"
+                android:gravity="center_horizontal|center_vertical"
+                android:text="发送"
+                android:textColor="@color/gray_black"
+                android:textSize="15sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/expressionAppPanel"
+            android:layout_width="fill_parent"
+            android:layout_height="200dip"
+            android:background="@color/white"
+            android:orientation="vertical"
+            android:paddingTop="10dip"
+            android:visibility="gone" >
+
+            <GridView
+                android:id="@+id/expressionGridView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:horizontalSpacing="5dp"
+                android:numColumns="5"
+                android:padding="5dp"
+                android:stretchMode="columnWidth"
+                android:verticalSpacing="5dp" >
+            </GridView>
+        </LinearLayout>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/imageViewvoice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/voice" 
+        android:visibility="gone"
+        android:layout_centerInParent="true"/>
+
+</RelativeLayout>
