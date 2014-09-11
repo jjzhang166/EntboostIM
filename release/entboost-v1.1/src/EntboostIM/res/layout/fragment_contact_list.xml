@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+
+
+    <RelativeLayout
+        android:id="@+id/contactlist_persongroup_layout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@drawable/mm_listitem"
+        android:gravity="center_vertical" >
+
+        <ImageView
+            android:id="@+id/contactlist_persongroup_img"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="4dp"
+            android:padding="5dp"
+            android:src="@drawable/pgroup" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="7dp"
+            android:layout_toRightOf="@id/contactlist_persongroup_img"
+            android:text="个人群组"
+            android:textColor="#0F0F0F"
+            android:textSize="20sp" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/contactlist_ent_layout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@drawable/mm_listitem"
+        android:gravity="center_vertical" >
+
+        <ImageView
+            android:id="@+id/contactlist_ent_img"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="4dp"
+            android:padding="5dp"
+            android:src="@drawable/entlogo" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="7dp"
+            android:layout_toRightOf="@id/contactlist_ent_img"
+            android:text="企业组织"
+            android:textColor="#0F0F0F"
+            android:textSize="20sp" />
+    </RelativeLayout>
+
+    <include layout="@layout/item_add_contact" />
+
+    <ExpandableListView
+        android:id="@+id/friendlist"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:cacheColorHint="#00000000"
+        android:divider="@drawable/list_divider"
+        android:dividerHeight="1dip"
+        android:fastScrollEnabled="true" >
+    </ExpandableListView>
+
+</LinearLayout>

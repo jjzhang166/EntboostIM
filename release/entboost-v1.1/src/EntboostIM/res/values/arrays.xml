@@ -1,0 +1,8 @@
+<resources>
+
+    <string-array name="group_type">
+        <item>所属群组</item>
+        <item>非所属群组</item>
+    </string-array>
+
+</resources>
