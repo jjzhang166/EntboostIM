@@ -1,5 +1,5 @@
 ##EntboostIM：跨平台、跨应用的实时通讯平台(android版本)
-* [恩布官网](www.entboost.com)
+* [恩布官网](http://www.entboost.com)
 * [恩布云通讯技术论坛](http://forum.entboost.com/forum.php)
 * [企业IM私有云下载](http://doc.entboost.com/index.php/Downloads)
 * **为了保护授权企业IM的私密性和安全性，恩布服务端提供免费下载部署使用，开放客户端APP源码！**
