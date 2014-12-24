@@ -1,11 +1,11 @@
 package com.entboost.im.contact;
 
-import org.apache.commons.lang.StringUtils;
-
 import net.yunim.service.EntboostUM;
 import net.yunim.service.listener.EditContactListener;
+
+import org.apache.commons.lang3.StringUtils;
+
 import android.os.Bundle;
-import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
 

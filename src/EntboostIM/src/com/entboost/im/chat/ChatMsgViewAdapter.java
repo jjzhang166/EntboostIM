@@ -1,18 +1,23 @@
 package com.entboost.im.chat;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import net.yunim.eb.constants.EBConstants;
 import net.yunim.service.EntboostCM;
 import net.yunim.service.EntboostCache;
 import net.yunim.service.api.UserCenter;
-import net.yunim.service.constants.ApiConstants;
+import net.yunim.service.entity.AccountInfo;
 import net.yunim.service.entity.ChatRoomRichMsg;
+import net.yunim.service.entity.MemberInfo;
+import net.yunim.utils.ResourceUtils;
 import net.yunim.utils.UIUtils;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.text.method.LinkMovementMethod;
 import android.view.LayoutInflater;
@@ -20,18 +25,26 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.entboost.im.R;
-import com.entboost.ui.utils.ImageLoader;
+import com.entboost.im.contact.DefaultUserInfoActivity;
+import com.entboost.im.department.MemberInfoActivity;
+import com.entboost.im.user.UserInfoActivity;
 import com.entboost.utils.AbDateUtil;
 import com.entboost.voice.ExtAudioRecorder;
+import com.lidroid.xutils.BitmapUtils;
+import com.lidroid.xutils.bitmap.BitmapDisplayConfig;
+import com.lidroid.xutils.bitmap.callback.BitmapLoadCallBack;
+import com.lidroid.xutils.bitmap.callback.BitmapLoadFrom;
 
 public class ChatMsgViewAdapter extends BaseAdapter {
-	private List<ChatRoomRichMsg> mChatMsgList;
+	private List<ChatRoomRichMsg> mChatMsgList=new ArrayList<ChatRoomRichMsg>();
 	private LayoutInflater mInflater;
 	private Context context;
+	private BitmapUtils bitmapUtils;
 
 	public static interface IMsgViewType {
 		int IMVT_COM_MSG = 0;
@@ -42,13 +55,15 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 	}
 
 	public void initChat(List<ChatRoomRichMsg> list) {
-		this.mChatMsgList = list;
+		this.mChatMsgList.clear();
+		this.mChatMsgList.addAll(list);
 	}
 
-	public ChatMsgViewAdapter(Context context,List<ChatRoomRichMsg> list) {
+	public ChatMsgViewAdapter(Context context, List<ChatRoomRichMsg> list) {
 		this.context = context;
-		this.mChatMsgList = list;
+		initChat(list);
 		this.mInflater = LayoutInflater.from(context);
+		bitmapUtils = new BitmapUtils(context);
 	}
 
 	@Override
@@ -96,23 +111,72 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 			viewHolder = new ViewHolder();
 			if (isComMsg) {
 				convertView = mInflater.inflate(
-						R.layout.chatting_item_msg_text_left, null);
+						R.layout.chatting_item_msg_text_right, null);
 				viewHolder.mProgressBar = (ProgressBar) convertView
 						.findViewById(R.id.sendingProgress);
 				viewHolder.errorImg = (ImageView) convertView
 						.findViewById(R.id.errorImg);
 			} else {
 				convertView = mInflater.inflate(
-						R.layout.chatting_item_msg_text_right, null);
+						R.layout.chatting_item_msg_text_left, null);
 				viewHolder.sendName = (TextView) convertView
 						.findViewById(R.id.sendName);
 			}
 			viewHolder.sendTime = (TextView) convertView
 					.findViewById(R.id.sendTime);
+			viewHolder.chatLayout = (LinearLayout) convertView
+					.findViewById(R.id.chatLayout);
 			viewHolder.chatContent = (TextView) convertView
 					.findViewById(R.id.chatContent);
 			viewHolder.userHead = (ImageView) convertView
 					.findViewById(R.id.userHead);
+			if (isComMsg) {
+				viewHolder.userHead
+						.setOnClickListener(new View.OnClickListener() {
+
+							@Override
+							public void onClick(View v) {
+								AccountInfo user = EntboostCache.getUser();
+								MemberInfo member = EntboostCache.getMember(
+										user.getUid(), mChatMsg.getDepCode());
+								if (member != null) {
+									Intent intent = new Intent(context,
+											MemberInfoActivity.class);
+									intent.putExtra("memberCode",
+											member.getEmp_code());
+									intent.putExtra("selfFlag", true);
+									context.startActivity(intent);
+								} else {
+									Intent intent = new Intent(context,
+											UserInfoActivity.class);
+									context.startActivity(intent);
+								}
+							}
+						});
+			} else {
+				viewHolder.userHead
+						.setOnClickListener(new View.OnClickListener() {
+
+							@Override
+							public void onClick(View v) {
+								MemberInfo member = EntboostCache.getMember(
+										mChatMsg.getSender(),
+										mChatMsg.getDepCode());
+								if (member != null) {
+									Intent intent = new Intent(context,
+											MemberInfoActivity.class);
+									intent.putExtra("memberCode",
+											member.getEmp_code());
+									context.startActivity(intent);
+								} else {
+									Intent intent = new Intent(context,
+											DefaultUserInfoActivity.class);
+									intent.putExtra("uid", mChatMsg.getSender());
+									context.startActivity(intent);
+								}
+							}
+						});
+			}
 			viewHolder.chatAttach = (ImageView) convertView
 					.findViewById(R.id.chatAttach);
 			viewHolder.voicetip = (ImageView) convertView
@@ -125,7 +189,6 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 		viewHolder.voicetip.setVisibility(View.GONE);
 		viewHolder.chatAttach.setVisibility(View.GONE);
 		viewHolder.chatAttach.setOnClickListener(null);
-		viewHolder.userHead.setFocusable(false);
 		viewHolder.chatAttach.setFocusable(false);
 		if (mChatMsgList.size() > 0 && position > 1) {
 			ChatRoomRichMsg lastChatMsg = mChatMsgList.get(position - 1);
@@ -147,10 +210,8 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 		}
 		if (mChatMsg.getType() == ChatRoomRichMsg.CHATROOMRICHMSG_TYPE_PIC) {
 			viewHolder.chatAttach.setVisibility(View.VISIBLE);
-			viewHolder.chatContent.setVisibility(View.GONE);
-			viewHolder.chatAttach.setImageBitmap(ImageLoader.getInstance()
-					.getBitmap(mChatMsg.getPicPath(),
-							ApiConstants.CHAT_IMG_WIDTH));
+			viewHolder.chatLayout.setVisibility(View.GONE);
+			viewHolder.chatAttach.setImageBitmap(mChatMsg.getPicBitmap());
 			viewHolder.chatAttach
 					.setOnClickListener(new View.OnClickListener() {
 
@@ -163,7 +224,7 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 						}
 					});
 		} else if (mChatMsg.getType() == ChatRoomRichMsg.CHATROOMRICHMSG_TYPE_RICH) {
-			viewHolder.chatContent.setVisibility(View.VISIBLE);
+			viewHolder.chatLayout.setVisibility(View.VISIBLE);
 			viewHolder.chatAttach.setVisibility(View.GONE);
 			viewHolder.chatContent.setText(UIUtils.getTipCharSequence(mChatMsg
 					.getTipHtml()));
@@ -171,7 +232,7 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 					.getInstance());
 		} else if (mChatMsg.getType() == ChatRoomRichMsg.CHATROOMRICHMSG_TYPE_VOICE) {
 			viewHolder.voicetip.setVisibility(View.VISIBLE);
-			viewHolder.chatContent.setVisibility(View.VISIBLE);
+			viewHolder.chatLayout.setVisibility(View.VISIBLE);
 			viewHolder.chatAttach.setVisibility(View.GONE);
 			viewHolder.chatContent.setText(UIUtils.getTipCharSequence(mChatMsg
 					.getTipHtml()));
@@ -185,6 +246,32 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 					});
 		}
 		if (isComMsg) {
+			// 显示自己的默认名片头像
+			AccountInfo user = EntboostCache.getUser();
+			Bitmap img = ResourceUtils.getHeadBitmap(user.getHead_rid());
+			if (img != null) {
+				viewHolder.userHead.setImageBitmap(img);
+			} else {
+				bitmapUtils.display(viewHolder.userHead, user.getHeadUrl(),
+						new BitmapLoadCallBack<ImageView>() {
+
+							@Override
+							public void onLoadCompleted(ImageView arg0,
+									String arg1, Bitmap arg2,
+									BitmapDisplayConfig arg3,
+									BitmapLoadFrom arg4) {
+								setBitmap(arg0, arg2);
+							}
+
+							@Override
+							public void onLoadFailed(ImageView arg0,
+									String arg1, Drawable arg2) {
+								viewHolder.userHead
+										.setImageResource(R.drawable.head1);
+							}
+
+						});
+			}
 			if (mChatMsg.getStatus() == EBConstants.SEND_STATUS_ING) {
 				viewHolder.mProgressBar.setVisibility(View.VISIBLE);
 				viewHolder.errorImg.setVisibility(View.GONE);
@@ -215,16 +302,43 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 						});
 			}
 		} else {
+			// 显示会话对方的默认名片头像
 			if (mChatMsg.getChatType() == ChatRoomRichMsg.CHATTYPE_GROUP) {
-				viewHolder.sendName.setText(EntboostCache.getName(mChatMsg
-						.getSender()));
+				viewHolder.sendName.setVisibility(View.VISIBLE);
+				viewHolder.sendName.setText(mChatMsg.getSendName());
 			}
+			Bitmap img = ResourceUtils.getHeadBitmap(mChatMsg.getHid());
+			if (img != null) {
+				viewHolder.userHead.setImageBitmap(img);
+			} else {
+				bitmapUtils.display(viewHolder.userHead, mChatMsg.getHeadUrl(),
+						new BitmapLoadCallBack<ImageView>() {
+
+							@Override
+							public void onLoadCompleted(ImageView arg0,
+									String arg1, Bitmap arg2,
+									BitmapDisplayConfig arg3,
+									BitmapLoadFrom arg4) {
+								setBitmap(arg0, arg2);
+							}
+
+							@Override
+							public void onLoadFailed(ImageView arg0,
+									String arg1, Drawable arg2) {
+								viewHolder.userHead
+										.setImageResource(R.drawable.head1);
+							}
+
+						});
+			}
+
 		}
 
 		return convertView;
 	}
 
 	static class ViewHolder {
+		public LinearLayout chatLayout;
 		public TextView sendTime;
 		public TextView sendName;
 		public TextView chatContent;

@@ -2,7 +2,7 @@ package com.entboost.im.chat;
 
 import net.yunim.service.EntboostCache;
 import net.yunim.service.entity.Resource;
-import net.yunim.utils.EmotionUtils;
+import net.yunim.utils.ResourceUtils;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -48,7 +48,7 @@ public class EmotionsImageAdapter extends BaseAdapter {
 		} else {
 			viewHolder = (EmotionsViewHolder) convertView.getTag();
 		}
-		viewHolder.img.setImageBitmap(EmotionUtils
+		viewHolder.img.setImageBitmap(ResourceUtils
 				.getEmotionBitmap(((Resource) getItem(position)).getRes_id()));
 		return convertView;
 	}

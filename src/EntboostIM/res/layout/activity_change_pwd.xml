@@ -115,14 +115,15 @@
 
     <Button
         android:id="@+id/changepwd_btn"
-        android:layout_width="90dp"
-        android:layout_height="40dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_alignLeft="@id/confirm_pwd_layout"
         android:layout_alignRight="@id/confirm_pwd_layout"
         android:layout_below="@id/confirm_pwd_layout"
         android:layout_marginTop="17dp"
         android:background="@drawable/btn_style_green"
         android:text="保存"
+        android:padding="12dp"
         android:textColor="#ffffff"
         android:textSize="18sp" />
 
@@ -134,8 +135,9 @@
         android:layout_alignLeft="@id/confirm_pwd_layout"
         android:layout_alignRight="@id/confirm_pwd_layout"
         android:layout_below="@id/changepwd_btn"
-        android:background="@drawable/btn_style_white"
+        android:background="@drawable/btn_style_w"
         android:text="取消"
+        android:padding="12dp"
         android:textColor="#333"
         android:textSize="18sp" />
 

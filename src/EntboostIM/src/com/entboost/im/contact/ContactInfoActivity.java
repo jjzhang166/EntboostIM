@@ -6,7 +6,7 @@ import net.yunim.service.entity.ContactInfo;
 import net.yunim.service.listener.DelContactListener;
 import net.yunim.utils.UIUtils;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -39,7 +39,7 @@ public class ContactInfoActivity extends EbActivity {
 		ViewUtils.inject(this);
 		contact = getIntent().getStringExtra("contact");
 		contactInfo = EntboostCache.getContactInfo(contact);
-		findViewById(R.id.contact_name_layout).setOnClickListener(
+		findViewById(R.id.contact_username).setOnClickListener(
 				new OnClickListener() {
 
 					@Override
@@ -76,7 +76,6 @@ public class ContactInfoActivity extends EbActivity {
 
 	private void init() {
 		TextView username = (TextView) findViewById(R.id.contact_username);
-		TextView name = (TextView) findViewById(R.id.contact_name);
 		TextView account = (TextView) findViewById(R.id.contact_account);
 		TextView description = (TextView) findViewById(R.id.contact_description);
 		TextView group = (TextView) findViewById(R.id.contact_group);
@@ -84,9 +83,12 @@ public class ContactInfoActivity extends EbActivity {
 			contactInfo = EntboostCache.getContactInfo(contact);
 			account.setText(contactInfo.getContact());
 			username.setText(contactInfo.getName());
-			name.setText(contactInfo.getName());
 			description.setText(contactInfo.getDescription());
 			group.setText(contactInfo.getGroupname());
+			if (contactInfo.getContact_uid() == null) {
+				View send_btn=findViewById(R.id.contact_send_btn);
+				send_btn.setVisibility(View.GONE);
+			}
 		}
 	}
 

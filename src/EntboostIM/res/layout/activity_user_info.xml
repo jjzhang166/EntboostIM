@@ -1,43 +1,16 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#FFFFFF"
-    android:padding="15dp"
+    android:background="@color/mainPageBG"
     android:orientation="vertical" >
-
-    <RelativeLayout
-        android:id="@+id/info_head_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="5dp"
-        android:background="@drawable/shape_bottom_line"
-        >
-
-        <TextView
-            android:id="@+id/textView1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_centerVertical="true"
-            android:text="头像："
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
-        <ImageView
-            android:id="@+id/info_header"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:src="@drawable/head1" />
-    </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/info_account_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:layout_marginTop="15dp"
-        android:padding="5dp"
-        android:background="@drawable/shape_bottom_line">
+        android:background="@drawable/bottom_top_line1"
+        android:padding="5dp" >
 
         <TextView
             android:layout_width="wrap_content"
@@ -45,7 +18,9 @@
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"
             android:text="帐号："
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+            android:layout_marginLeft="17dp"
+            android:textColor="#194e62"
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/info_account"
@@ -53,16 +28,17 @@
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
-            android:text="simon@163.com"
-            android:textAppearance="?android:attr/textAppearanceSmall" />
+            android:layout_marginRight="17dp"
+            android:textColor="#60b1ce"
+            android:textSize="12sp" />
     </RelativeLayout>
+
     <RelativeLayout
         android:id="@+id/info_name_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:padding="5dp"
-        android:background="@drawable/shape_bottom_line">
+        android:layout_height="50dp"
+        android:background="@drawable/bottom_line1"
+        android:padding="5dp" >
 
         <TextView
             android:layout_width="wrap_content"
@@ -70,7 +46,9 @@
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"
             android:text="名称："
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+            android:layout_marginLeft="17dp"
+            android:textColor="#194e62"
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/info_username"
@@ -78,16 +56,17 @@
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
-            android:text="simon"
-            android:textAppearance="?android:attr/textAppearanceSmall" />
+            android:layout_marginRight="17dp"
+            android:textColor="#60b1ce"
+            android:textSize="12sp"  />
     </RelativeLayout>
-     <RelativeLayout
+
+    <RelativeLayout
         android:id="@+id/info_description_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:padding="5dp"
-        android:background="@drawable/shape_bottom_line">
+        android:background="@drawable/bottom_line1"
+        android:padding="15dp" >
 
         <TextView
             android:id="@+id/textView_description"
@@ -95,15 +74,19 @@
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:text="备注信息："
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+            android:layout_marginLeft="10dp"
+            android:textColor="#194e62"
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/info_description"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
             android:layout_below="@id/textView_description"
-            android:text="清风拂面昨夜来，小桥流水"
-            android:textAppearance="?android:attr/textAppearanceSmall" />
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
+            android:textColor="#60b1ce"
+            android:textSize="12sp"  />
     </RelativeLayout>
+
 </LinearLayout>

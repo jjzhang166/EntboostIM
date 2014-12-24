@@ -5,7 +5,7 @@ import java.util.Vector;
 import net.yunim.service.EntboostCM;
 import net.yunim.service.EntboostUM;
 import net.yunim.service.constants.EB_ACCOUNT_TYPE;
-import net.yunim.service.entity.CardInfo;
+import net.yunim.service.entity.CallInfo;
 import net.yunim.service.listener.EditContactListener;
 import net.yunim.utils.UIUtils;
 import android.content.Context;
@@ -28,19 +28,20 @@ public class CallAdapter extends BaseAdapter {
 	private Context mContext;
 	// xml转View对象
 	private LayoutInflater mInflater;
-	private Vector<CardInfo> list;
+	private Vector<CallInfo> list=new Vector<CallInfo>();
 
 	public CallAdapter(Context context, LayoutInflater mInflater,
-			Vector<CardInfo> list) {
+			Vector<CallInfo> list) {
 		this.mContext = context;
 		// 用于将xml转为View
 		this.mInflater = (LayoutInflater) context
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		this.list = list;
+		setList(list);
 	}
 
-	public void setList(Vector<CardInfo> list) {
-		this.list = list;
+	public void setList(Vector<CallInfo> list) {
+		this.list.clear();
+		this.list.addAll(list);
 	}
 
 	@Override
@@ -95,8 +96,8 @@ public class CallAdapter extends BaseAdapter {
 
 						@Override
 						public void onClick(View v) {
-							CardInfo cardInfo = (CardInfo) getItem(position);
-							if (cardInfo.getType() != CardInfo.TYPE_CALLING) {
+							CallInfo cardInfo = (CallInfo) getItem(position);
+							if (cardInfo.getType() != CallInfo.TYPE_CALLING) {
 								holder.call_btns.setVisibility(View.GONE);
 								return;
 							}
@@ -112,18 +113,18 @@ public class CallAdapter extends BaseAdapter {
 
 						@Override
 						public void onClick(View v) {
-							CardInfo cardInfo = (CardInfo) getItem(position);
-							EntboostCM.callAnswer(cardInfo.getCall_id(),
-									cardInfo.getTo(), true);
+							CallInfo callInfo = (CallInfo) getItem(position);
+							EntboostCM.callAnswer(callInfo.getCallid(),
+									callInfo.getCallTo(), true);
 							enableBtns(holder);
-							cardInfo.setType(CardInfo.TYPE_ACCEPT);
+							callInfo.setType(CallInfo.TYPE_ACCEPT);
 							holder.itemstype.setText("已接受");
 							Intent intent = new Intent(mContext,
 									ChatActivity.class);
 							intent.putExtra(ChatActivity.INTENT_TITLE,
-									cardInfo.getNa());
+									callInfo.getCardInfo().getNa());
 							intent.putExtra(ChatActivity.INTENT_UID,
-									cardInfo.getTo());
+									callInfo.getCallTo());
 							mContext.startActivity(intent);
 							((CallListActivity) mContext).finish();
 						}
@@ -133,11 +134,11 @@ public class CallAdapter extends BaseAdapter {
 
 						@Override
 						public void onClick(View v) {
-							CardInfo cardInfo = (CardInfo) getItem(position);
-							EntboostCM.callAnswer(cardInfo.getCall_id(),
-									cardInfo.getTo(), false);
+							CallInfo callInfo = (CallInfo) getItem(position);
+							EntboostCM.callAnswer(callInfo.getCallid(),
+									callInfo.getCallTo(), false);
 							enableBtns(holder);
-							cardInfo.setType(CardInfo.TYPE_REJECT);
+							callInfo.setType(CallInfo.TYPE_REJECT);
 							holder.itemstype.setText("已拒绝");
 						}
 					});
@@ -145,9 +146,9 @@ public class CallAdapter extends BaseAdapter {
 
 				@Override
 				public void onClick(View v) {
-					final CardInfo cardInfo = (CardInfo) getItem(position);
-					cardInfo.setType(CardInfo.TYPE_ACCEPT);
-					EntboostUM.addContact(cardInfo, new EditContactListener() {
+					final CallInfo callInfo = (CallInfo) getItem(position);
+					callInfo.setType(CallInfo.TYPE_ACCEPT);
+					EntboostUM.addContact(callInfo, new EditContactListener() {
 
 						@Override
 						public void onFailure(String arg0) {
@@ -160,9 +161,9 @@ public class CallAdapter extends BaseAdapter {
 							Intent intent = new Intent(mContext,
 									ChatActivity.class);
 							intent.putExtra(ChatActivity.INTENT_TITLE,
-									cardInfo.getNa());
+									callInfo.getCardInfo().getNa());
 							intent.putExtra(ChatActivity.INTENT_UID,
-									cardInfo.getTo());
+									callInfo.getCallTo());
 							mContext.startActivity(intent);
 							((CallListActivity) mContext).finish();
 						}
@@ -173,12 +174,12 @@ public class CallAdapter extends BaseAdapter {
 
 				@Override
 				public void onClick(View v) {
-					final CardInfo cardInfo = (CardInfo) getItem(position);
-					cardInfo.setType(CardInfo.TYPE_ACCEPT);
+					final CallInfo callInfo = (CallInfo) getItem(position);
+					callInfo.setType(CallInfo.TYPE_ACCEPT);
 					((CallListActivity) mContext).showDialog(
 							"详细资料",
-							"名称：" + cardInfo.getNa() + "\n" + "公司："
-									+ cardInfo.getEn());
+							"名称：" + callInfo.getCardInfo().getNa() + "\n" + "公司："
+									+ callInfo.getCardInfo().getEn());
 				}
 			});
 
@@ -188,31 +189,31 @@ public class CallAdapter extends BaseAdapter {
 		}
 
 		// 获取该行的数据
-		CardInfo cardInfo = (CardInfo) getItem(position);
-		holder.itemsTitle.setText(cardInfo.getNa());
-		if (cardInfo.getType() == CardInfo.TYPE_CALLING) {
+		CallInfo callInfo = (CallInfo) getItem(position);
+		holder.itemsTitle.setText(callInfo.getCardInfo().getNa());
+		if (callInfo.getType() == CallInfo.TYPE_CALLING) {
 			holder.itemstype.setText("呼叫中");
-		} else if (cardInfo.getType() == CardInfo.TYPE_ACCEPT) {
+		} else if (callInfo.getType() == CallInfo.TYPE_ACCEPT) {
 			holder.itemstype.setText("已接受");
 			holder.itemsBtnAccept.setVisibility(View.GONE);
-		} else if (cardInfo.getType() == CardInfo.TYPE_REJECT) {
+		} else if (callInfo.getType() == CallInfo.TYPE_REJECT) {
 			holder.itemstype.setText("已拒绝");
 			holder.itemsBtnAccept.setVisibility(View.GONE);
-		} else if (cardInfo.getType() == CardInfo.TYPE_TIMEOUT) {
+		} else if (callInfo.getType() == CallInfo.TYPE_TIMEOUT) {
 			holder.itemstype.setText("已超时");
 			holder.itemsBtnAccept.setVisibility(View.GONE);
 		}
 		String timeStr = AbDateUtil.formatDateStr2Desc(AbDateUtil
-				.getStringByFormat(cardInfo.getTime(),
+				.getStringByFormat(callInfo.getTime(),
 						AbDateUtil.dateFormatYMDHMS),
 				AbDateUtil.dateFormatYMDHMS);
-		if (cardInfo.getT() == EB_ACCOUNT_TYPE.EB_ACCOUNT_TYPE_OUT_ENT
+		if (callInfo.getCardInfo().getT() == EB_ACCOUNT_TYPE.EB_ACCOUNT_TYPE_OUT_ENT
 				.ordinal()) {
 			holder.itemsMsg.setText(timeStr + "来自外部企业");
-		} else if (cardInfo.getT() == EB_ACCOUNT_TYPE.EB_ACCOUNT_TYPE_USER
+		} else if (callInfo.getCardInfo().getT() == EB_ACCOUNT_TYPE.EB_ACCOUNT_TYPE_USER
 				.ordinal()) {
 			holder.itemsMsg.setText(timeStr + "来自注册用户");
-		} else if (cardInfo.getT() == EB_ACCOUNT_TYPE.EB_ACCOUNT_TYPE_VISITOR
+		} else if (callInfo.getCardInfo().getT() == EB_ACCOUNT_TYPE.EB_ACCOUNT_TYPE_VISITOR
 				.ordinal()) {
 			holder.itemsMsg.setText(timeStr + "来自访客");
 		}

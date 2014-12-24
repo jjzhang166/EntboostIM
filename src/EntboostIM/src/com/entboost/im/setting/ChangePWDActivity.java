@@ -1,13 +1,11 @@
 package com.entboost.im.setting;
 
-import net.yunim.service.EntboostCache;
 import net.yunim.service.EntboostUM;
 import net.yunim.service.listener.EditInfoListener;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 

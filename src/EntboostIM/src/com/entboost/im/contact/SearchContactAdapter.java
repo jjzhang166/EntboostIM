@@ -2,10 +2,11 @@ package com.entboost.im.contact;
 
 import java.util.List;
 
-import net.yunim.service.entity.SearchContact;
+import net.yunim.service.entity.MemberInfo;
+import net.yunim.service.entity.SearchResultInfo;
+import net.yunim.utils.ResourceUtils;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,26 +16,31 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.entboost.im.R;
-import com.entboost.ui.utils.AbBitmapUtils;
+import com.lidroid.xutils.BitmapUtils;
+import com.lidroid.xutils.bitmap.BitmapDisplayConfig;
+import com.lidroid.xutils.bitmap.callback.BitmapLoadCallBack;
+import com.lidroid.xutils.bitmap.callback.BitmapLoadFrom;
 
 public class SearchContactAdapter extends BaseAdapter {
-	private List<SearchContact> list;
+	private List<SearchResultInfo> list;
 	private Context mContext;
 	private LayoutInflater mInflater;
+	private BitmapUtils bitmapUtils;
 
 	public SearchContactAdapter(Context context, LayoutInflater mInflater,
-			List<SearchContact> list) {
+			List<SearchResultInfo> list) {
 		this.mContext = context;
 		this.mInflater = (LayoutInflater) context
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		this.list = list;
+		bitmapUtils = new BitmapUtils(mContext);
 	}
 
-	public List<SearchContact> getList() {
+	public List<SearchResultInfo> getList() {
 		return list;
 	}
 
-	public void setList(List<SearchContact> list) {
+	public void setList(List<SearchResultInfo> list) {
 		this.list = list;
 	}
 
@@ -75,15 +81,35 @@ public class SearchContactAdapter extends BaseAdapter {
 		}
 
 		// 获取该行的数据
-		SearchContact obj = (SearchContact) getItem(position);
+		SearchResultInfo obj = (SearchResultInfo) getItem(position);
 		holder.itemsTitle.setText(obj.getName());
 		holder.itemsText.setText(obj.getSrc());
-		Drawable drawable = mContext.getResources()
-				.getDrawable(R.drawable.head);
-		BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-		Bitmap bitmap = bitmapDrawable.getBitmap();
-		holder.itemsIcon
-				.setImageBitmap(AbBitmapUtils.toRoundCorner(bitmap, 30));
+		if(obj.getType() == SearchResultInfo.TYPE_USERCHAT){
+			MemberInfo memberInfo = (MemberInfo) obj.getObj();
+			Bitmap img = ResourceUtils.getHeadBitmap(memberInfo.getH_r_id());
+			if (img != null) {
+				holder.itemsIcon.setImageBitmap(img);
+			} else {
+				bitmapUtils.display(holder.itemsIcon, memberInfo.getHeadUrl(),new BitmapLoadCallBack<ImageView>(){
+
+					@Override
+					public void onLoadCompleted(ImageView arg0, String arg1,
+							Bitmap arg2, BitmapDisplayConfig arg3,
+							BitmapLoadFrom arg4) {
+						setBitmap(arg0, arg2);
+					}
+
+					@Override
+					public void onLoadFailed(ImageView arg0, String arg1,
+							Drawable arg2) {
+						holder.itemsIcon.setImageResource(R.drawable.head1);
+					}
+
+					
+				});
+			}
+		}
+		
 		// 图片的下载
 		// mAbImageDownloader.display(holder.itemsIcon, null);
 

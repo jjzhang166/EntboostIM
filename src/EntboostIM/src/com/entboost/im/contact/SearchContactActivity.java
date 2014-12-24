@@ -3,10 +3,12 @@ package com.entboost.im.contact;
 import java.util.ArrayList;
 
 import net.yunim.service.EntboostCache;
+import net.yunim.service.EntboostUM;
 import net.yunim.service.entity.ContactInfo;
 import net.yunim.service.entity.GroupInfo;
 import net.yunim.service.entity.MemberInfo;
-import net.yunim.service.entity.SearchContact;
+import net.yunim.service.entity.SearchResultInfo;
+import net.yunim.service.listener.SearchMemberListener;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -27,6 +29,10 @@ public class SearchContactActivity extends EbActivity {
 
 	private ListView mListView;
 	private SearchContactAdapter adapter;
+	private int type;
+	private long starttime;
+	private long endTime;
+	private long waitTime = 2000;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -35,70 +41,131 @@ public class SearchContactActivity extends EbActivity {
 		ViewUtils.inject(this);
 		mListView = (ListView) findViewById(R.id.mListView);
 		adapter = new SearchContactAdapter(this, mInflater,
-				new ArrayList<SearchContact>());
+				new ArrayList<SearchResultInfo>());
 		mListView.setAdapter(adapter);
+		type = getIntent().getIntExtra("type", -1);
+		EditText search = (EditText) findViewById(R.id.search);
+		if (type == SearchResultInfo.TYPE_GROUPCHAT) {
+			search.setHint("搜索:个人群组、企业部门");
+			search.addTextChangedListener(new TextWatcher() {
+
+				@Override
+				public void onTextChanged(CharSequence s, int start,
+						int before, int count) {
+
+				}
+
+				@Override
+				public void beforeTextChanged(CharSequence s, int start,
+						int count, int after) {
+				}
+
+				@Override
+				public void afterTextChanged(Editable s) {
+					EntboostCache.searchGroup(adapter.getList(), s.toString());
+					adapter.notifyDataSetChanged();
+				}
+			});
+		} else if (type == SearchResultInfo.TYPE_CONTACTCHAT) {
+			search.setHint("搜索:联系人");
+			search.addTextChangedListener(new TextWatcher() {
+
+				@Override
+				public void onTextChanged(CharSequence s, int start,
+						int before, int count) {
+
+				}
+
+				@Override
+				public void beforeTextChanged(CharSequence s, int start,
+						int count, int after) {
+				}
+
+				@Override
+				public void afterTextChanged(Editable s) {
+					EntboostCache.searchContact(adapter.getList(), s.toString());
+					adapter.notifyDataSetChanged();
+				}
+			});
+		} else if (type == SearchResultInfo.TYPE_USERCHAT) {
+			search.setHint("搜索:群组成员");
+			starttime = System.currentTimeMillis();
+			search.addTextChangedListener(new TextWatcher() {
+
+				@Override
+				public void onTextChanged(CharSequence s, int start,
+						int before, int count) {
+
+				}
+
+				@Override
+				public void beforeTextChanged(CharSequence s, int start,
+						int count, int after) {
+				}
+
+				@Override
+				public void afterTextChanged(Editable s) {
+					endTime = System.currentTimeMillis();
+					if (endTime - starttime - waitTime >= 0) {
+						starttime = System.currentTimeMillis();
+						pageInfo.showProgress("正在搜索群组成员");
+						EntboostUM.searchMember(adapter.getList(),
+								s.toString(), new SearchMemberListener() {
+
+									@Override
+									public void onFailure(String errMsg) {
+										pageInfo.showError(errMsg);
+									}
+
+									@Override
+									public void onSearchMemberSuccess() {
+										pageInfo.hide();
+										adapter.notifyDataSetChanged();
+									}
+
+								});
+					}
+				}
+			});
+
+		}
 		mListView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
 				// 获取该行的数据
-				SearchContact info = (SearchContact) adapter.getItem(position);
+				SearchResultInfo info = (SearchResultInfo) adapter
+						.getItem(position);
 				if (info != null) {
-					if (info.getType() == SearchContact.TYPE_GROUPCHAT) {
+					if (info.getType() == SearchResultInfo.TYPE_GROUPCHAT) {
 						GroupInfo departmentInfo = (GroupInfo) info.getObj();
 						Intent intent = new Intent(SearchContactActivity.this,
 								DepartmentInfoActivity.class);
-						if (departmentInfo != null) {
-							Bundle bundle = new Bundle();
-							bundle.putSerializable("departmentInfo",
-									departmentInfo);
-							intent.putExtras(bundle);
-							startActivity(intent);
-						}
-					} else if (info.getType() == SearchContact.TYPE_CONTACTCHAT) {
+						intent.putExtra("depid", departmentInfo.getDep_code());
+						startActivity(intent);
+					} else if (info.getType() == SearchResultInfo.TYPE_CONTACTCHAT) {
 						ContactInfo contactInfo = (ContactInfo) info.getObj();
 						Intent intent = new Intent(SearchContactActivity.this,
 								ContactInfoActivity.class);
-						if (contactInfo != null) {
-							Bundle bundle = new Bundle();
-							bundle.putSerializable("contactInfo", contactInfo);
-							intent.putExtras(bundle);
-							startActivity(intent);
-						}
-					} else if (info.getType() == SearchContact.TYPE_USERCHAT) {
+						intent.putExtra("contact", contactInfo.getContact());
+						startActivity(intent);
+					} else if (info.getType() == SearchResultInfo.TYPE_USERCHAT) {
 						MemberInfo memberInfo = (MemberInfo) info.getObj();
 						Intent intent = new Intent(SearchContactActivity.this,
 								MemberInfoActivity.class);
-						if (memberInfo != null) {
-							Bundle bundle = new Bundle();
-							bundle.putSerializable("memberInfo", memberInfo);
-							intent.putExtras(bundle);
-							startActivity(intent);
+						Bundle bundle = new Bundle();
+						bundle.putSerializable("memberInfo", memberInfo);
+						intent.putExtras(bundle);
+						intent.putExtra("memberCode", memberInfo.getEmp_code());
+						if (memberInfo.getEmp_uid() - EntboostCache.getUid() == 0) {
+							intent.putExtra("selfFlag", true);
 						}
+						startActivity(intent);
 					}
 				}
 			}
 		});
-		EditText search = (EditText) findViewById(R.id.search);
-		search.addTextChangedListener(new TextWatcher() {
 
-			@Override
-			public void onTextChanged(CharSequence s, int start, int before,
-					int count) {
-
-			}
-
-			@Override
-			public void beforeTextChanged(CharSequence s, int start, int count,
-					int after) {
-			}
-
-			@Override
-			public void afterTextChanged(Editable s) {
-				EntboostCache.searchContact(adapter.getList(), s.toString());
-				adapter.notifyDataSetChanged();
-			}
-		});
 	}
 
 }

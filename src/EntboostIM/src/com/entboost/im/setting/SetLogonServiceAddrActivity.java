@@ -1,11 +1,12 @@
 package com.entboost.im.setting;
 
-import org.apache.commons.lang.StringUtils;
-
+import net.yunim.service.EntboostCache;
 import net.yunim.service.EntboostLC;
-import net.yunim.service.EntboostUM;
-import net.yunim.service.listener.EditInfoListener;
-import net.yunim.utils.UIUtils;
+import net.yunim.service.listener.InitAppKeyListener;
+
+import org.apache.commons.lang3.StringUtils;
+
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -25,16 +26,43 @@ public class SetLogonServiceAddrActivity extends EbActivity {
 		super.onCreate(savedInstanceState);
 		setAbContentView(R.layout.activity_set_logon_service_addr);
 		ViewUtils.inject(this);
-		((EditText) findViewById(R.id.setService_name)).setText(EntboostLC
-				.getLogonCenterAddr());
+		((EditText) findViewById(R.id.setService_name)).setText(EntboostCache
+				.getSharedLogonCenterAddr());
 	}
 
 	@OnClick(R.id.setService_save_btn)
 	public void save(View view) {
-		String name = setService_name.getText().toString();
-		EntboostLC.setLogonCenterAddr(name);
-		UIUtils.showToast(this, "设置服务器地址成功！");
-		finish();
+		final String name = setService_name.getText().toString();
+		if (!StringUtils.equals(name, EntboostCache.getSharedLogonCenterAddr())) {
+			showDialog("提示", "修改服务器地址，需要重新验证AppKey,确定需要修改吗？",
+					new DialogInterface.OnClickListener() {
+
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							showProgressDialog("正在修改服务器地址，并重新验证AppKey!");
+							EntboostLC.initAPPKey(name, 874562130982l,
+									"ec289op09uh5axs34152bnm7856debva",
+									new InitAppKeyListener() {
+
+										@Override
+										public void onFailure(String errMsg) {
+											pageInfo.showError(errMsg);
+											removeProgressDialog();
+										}
+
+										@Override
+										public void onInitAppKeySuccess() {
+											removeProgressDialog();
+											finish();
+										}
+									});
+
+						}
+
+					});
+		} else {
+			finish();
+		}
 	}
 
 	@OnClick(R.id.setService_cancel_btn)

@@ -8,7 +8,7 @@ import java.util.Map;
 
 import net.yunim.service.entity.ContactInfo;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -34,7 +34,11 @@ public class ContactAdapter extends BaseExpandableListAdapter {
 		grouplist.clear();
 		mList.clear();
 		contactList.clear();
+		Collections.sort(contactInfos);
 		for (ContactInfo gi : contactInfos) {
+			if (StringUtils.isBlank(gi.getGroupname())) {
+				gi.setGroupname("未分组联系人");
+			}
 			if (!grouplist.contains(gi.getGroupname())) {
 				grouplist.add(gi.getGroupname());
 			}
@@ -43,7 +47,7 @@ public class ContactAdapter extends BaseExpandableListAdapter {
 			}
 			mList.get(gi.getGroupname()).add(gi);
 		}
-		Collections.reverse(grouplist);
+		Collections.sort(grouplist);
 		for (String groupname : grouplist) {
 			contactList.add(mList.get(groupname));
 		}
@@ -63,7 +67,9 @@ public class ContactAdapter extends BaseExpandableListAdapter {
 	}
 
 	private class GroupViewHolder {
+		ImageView itemsHead;
 		TextView itemsText;
+		TextView itemsDesc;
 	}
 
 	@Override
@@ -91,7 +97,7 @@ public class ContactAdapter extends BaseExpandableListAdapter {
 					.findViewById(R.id.user_head));
 			holder2.userName = ((TextView) convertView
 					.findViewById(R.id.user_name));
-			holder2.description= ((TextView) convertView
+			holder2.description = ((TextView) convertView
 					.findViewById(R.id.user_description));
 			convertView.setTag(holder2);
 		} else {
@@ -106,14 +112,20 @@ public class ContactAdapter extends BaseExpandableListAdapter {
 			name = mi.getContact();
 		}
 		holder2.userName.setText(name);
-		holder2.description.setText(mi.getDescription());
+		String type = "";
+		if (mi.getContact_uid() == null) {
+			type = "[非系统用户]";
+		} else {
+			type = "[系统用户]";
+		}
+		holder2.description.setText(type + mi.getDescription());
 		holder2.userImg.setImageResource(R.drawable.head1);
 		return convertView;
 	}
 
 	@Override
 	public int getChildrenCount(int groupPosition) {
-		if(groupPosition>=contactList.size()){
+		if (groupPosition >= contactList.size()) {
 			return 0;
 		}
 		return contactList.get(groupPosition).size();
@@ -147,15 +159,24 @@ public class ContactAdapter extends BaseExpandableListAdapter {
 			// 减少findView的次数
 			holder1 = new GroupViewHolder();
 			// 初始化布局中的元素
+			holder1.itemsHead = ((ImageView) convertView
+					.findViewById(R.id.item_contact_group_head));
 			holder1.itemsText = ((TextView) convertView
 					.findViewById(R.id.item_contact_group_name));
+			holder1.itemsDesc = ((TextView) convertView
+					.findViewById(R.id.item_contact_group_type));
 			convertView.setTag(holder1);
 		} else {
 			holder1 = (GroupViewHolder) convertView.getTag();
 		}
+		if (isExpanded) {
+			holder1.itemsHead.setImageResource(R.drawable.a4041);
+		} else {
+			holder1.itemsHead.setImageResource(R.drawable.a4040);
+		}
 		if (mList.get(groupname) != null) {
-			holder1.itemsText.setText(groupname + "("
-					+ mList.get(groupname).size() + ")");
+			holder1.itemsText.setText(groupname);
+			holder1.itemsDesc.setText(mList.get(groupname).size() + "");
 		}
 		return convertView;
 	}

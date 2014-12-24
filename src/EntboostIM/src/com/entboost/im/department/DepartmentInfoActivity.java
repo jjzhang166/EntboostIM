@@ -1,5 +1,7 @@
 package com.entboost.im.department;
 
+import net.yunim.service.EntboostCache;
+import net.yunim.service.constants.EB_GROUP_TYPE;
 import net.yunim.service.entity.GroupInfo;
 import net.yunim.utils.UIUtils;
 import android.content.Intent;
@@ -16,29 +18,51 @@ import com.lidroid.xutils.view.annotation.event.OnClick;
 public class DepartmentInfoActivity extends EbActivity {
 
 	private GroupInfo departmentInfo;
+	private Long depid;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setAbContentView(R.layout.activity_department_info);
 		ViewUtils.inject(this);
-		departmentInfo = (GroupInfo) getIntent().getSerializableExtra(
-				"departmentInfo");
+		depid = getIntent().getLongExtra("depid", -1);
+		departmentInfo = EntboostCache.getDepartment(depid);
 		init();
 	}
 
 	private void init() {
-		TextView name = (TextView) findViewById(R.id.department_name);
+		TextView name = (TextView) findViewById(R.id.department_username);
 		TextView description = (TextView) findViewById(R.id.department_description);
+		TextView creator = (TextView) findViewById(R.id.department_account);
+		TextView memberNum = (TextView) findViewById(R.id.department_member);
+		View send_btn=findViewById(R.id.department_send_btn);
 		if (departmentInfo != null) {
+			memberNum.setText(departmentInfo.getEmp_count() + "");
+			creator.setText(departmentInfo.getCreator());
 			name.setText(departmentInfo.getDep_name());
 			description.setText(departmentInfo.getDescription());
+			if (departmentInfo.getMy_emp_id() == null
+					|| departmentInfo.getMy_emp_id() <= 0) {
+				send_btn.setVisibility(View.GONE);
+			}
 		}
 	}
-	
+	@OnClick(R.id.department_member_layout)
+	public void showMemberlist(View view){
+		Intent intent = new Intent(this, MemberListActivity.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+				| Intent.FLAG_ACTIVITY_SINGLE_TOP
+				| Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		intent.putExtra("group", departmentInfo);
+		this.startActivity(intent);
+	}
+
 	@OnClick(R.id.department_send_btn)
-	public void sendMsg(View view){
-		if(departmentInfo.getOwnType()==1){
+	public void sendMsg(View view) {
+		if ((departmentInfo.getType() == EB_GROUP_TYPE.EB_GROUP_TYPE_DEPARTMENT
+				.getValue() || departmentInfo.getType() == EB_GROUP_TYPE.EB_GROUP_TYPE_PROJECT
+				.getValue())
+				&& departmentInfo.getMy_emp_id() == null) {
 			UIUtils.showToast(this, "不是所属企业群组，无法进行群组会话！");
 			return;
 		}
@@ -48,7 +72,8 @@ public class DepartmentInfoActivity extends EbActivity {
 				| Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		intent.putExtra(ChatActivity.INTENT_TITLE, departmentInfo.getDep_name());
 		intent.putExtra(ChatActivity.INTENT_UID, departmentInfo.getDep_code());
-		intent.putExtra(ChatActivity.INTENT_CHATTYPE, ChatActivity.CHATTYPE_GROUP);
+		intent.putExtra(ChatActivity.INTENT_CHATTYPE,
+				ChatActivity.CHATTYPE_GROUP);
 		this.startActivity(intent);
 	}
 

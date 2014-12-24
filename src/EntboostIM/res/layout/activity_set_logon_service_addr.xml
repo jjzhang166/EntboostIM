@@ -1,7 +1,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#FFFFFF"
+    android:background="@color/mainPageBG"
     android:orientation="vertical"
     android:padding="15dp" >
 
@@ -17,7 +17,7 @@
         android:id="@+id/textView1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="为空将使用公众服务器地址"
+        android:text="留空默认连接恩布公有云环境"
         android:textAppearance="?android:attr/textAppearanceSmall" />
 
     <Button
@@ -25,19 +25,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:background="@drawable/btn_style_green"
+        android:background="@drawable/btn_style_green1"
         android:text="保存修改"
-        android:textColor="#ffffff" 
-        android:textSize="18sp"/>
+        android:padding="12dp"
+        android:textColor="#19621c"
+        android:textSize="16sp"/>
     
     <Button
         android:id="@+id/setService_cancel_btn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:background="@drawable/btn_style_white"
+        android:background="@drawable/btn_style_w"
         android:text="取消"
-        android:textColor="#333"
-        android:textSize="18sp" />
+        android:padding="12dp"
+        android:textColor="#29728d"
+        android:textSize="16sp" />
 
 </LinearLayout>

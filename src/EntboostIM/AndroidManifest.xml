@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.entboost.im"
     android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionName="1.1" >
 
     <uses-sdk
         android:minSdkVersion="9"
@@ -83,20 +83,12 @@
             android:label="@string/title_activity_department_info" >
         </activity>
         <activity
-            android:name="com.entboost.im.department.MemberInfoActivity"
-            android:label="@string/title_activity_member_info" >
-        </activity>
-        <activity
-            android:name="com.entboost.im.persongroup.PersonGroupActivity"
-            android:label="@string/title_activity_persongroup" >
-        </activity>
-        <activity
             android:name="com.entboost.im.persongroup.PersonGroupInfoActivity"
             android:label="@string/title_activity_persongroup_info" >
         </activity>
         <activity
-            android:name="com.entboost.im.persongroup.PersonInfoActivity"
-            android:label="@string/title_activity_person_info" >
+            android:name="com.entboost.im.department.MemberInfoActivity"
+            android:label="@string/title_activity_member_info" >
         </activity>
         <activity
             android:name="com.entboost.im.WelcomeActivity"
@@ -128,6 +120,25 @@
             android:name="com.entboost.im.setting.SetLogonServiceAddrActivity"
             android:label="@string/title_activity_set_logon_service_addr" >
         </activity>
+        <activity
+            android:name="com.entboost.im.department.SelectHeadImgActivity"
+            android:label="@string/title_activity_select_head_img" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.department.MemberListActivity"
+            android:label="@string/title_activity_member_list" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.function.FunctionMainActivity"
+            android:label="@string/title_activity_function_main" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.contact.DefaultUserInfoActivity"
+            android:label="@string/title_activity_default_user_info" >
+        </activity>
+
+        <service android:name="net.yunim.service.api.EbClientService" >
+        </service>
     </application>
 
 </manifest>

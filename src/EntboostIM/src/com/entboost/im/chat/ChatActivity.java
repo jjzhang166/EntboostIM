@@ -6,9 +6,8 @@ import net.yunim.service.entity.ChatRoomRichMsg;
 import net.yunim.service.entity.Resource;
 import net.yunim.utils.UIUtils;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.Cursor;
@@ -20,7 +19,6 @@ import android.text.TextWatcher;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
@@ -34,6 +32,9 @@ import android.widget.ListView;
 
 import com.entboost.im.R;
 import com.entboost.im.base.EbActivity;
+import com.entboost.im.contact.DefaultUserInfoActivity;
+import com.entboost.ui.base.view.pupmenu.PopMenuItem;
+import com.entboost.ui.base.view.pupmenu.PopMenuItemOnClickListener;
 import com.entboost.ui.base.view.titlebar.AbTitleBar;
 import com.entboost.utils.NetworkUtils;
 import com.entboost.voice.ExtAudioRecorder;
@@ -58,6 +59,7 @@ public class ChatActivity extends EbActivity {
 	private ImageButton picBtn;
 	private Button sendBtn;
 	private ImageView voiceImg;
+	private String title;
 
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
@@ -68,13 +70,26 @@ public class ChatActivity extends EbActivity {
 	public void onReceiveUserMessage(ChatRoomRichMsg msg) {
 		// 启动会话界面，接收消息自动设置已读
 		if (msg.getChatType() == ChatRoomRichMsg.CHATTYPE_GROUP) {
-			EntboostCache.readMsg(msg.getDepCode());
+			if (msg.getDepCode() - uid == 0) {
+				EntboostCache.readMsg(msg.getDepCode());
+			} else {
+				pageInfo.showInfo(msg.getSendName() + "["+msg.getDepName()+"]:"
+						+ UIUtils.getTipCharSequence(msg.getTipHtml()),5);
+			}
 		} else {
-			EntboostCache.readMsg(msg.getSender());
+			if (msg.getSender() - uid == 0||msg.getSender()-EntboostCache.getUid()==0) {
+				EntboostCache.readMsg(msg.getSender());
+			} else {
+				pageInfo.showInfo(msg.getSendName() + ":"
+						+ UIUtils.getTipCharSequence(msg.getTipHtml()),5);
+			}
 		}
 		refreshPage();
 	}
 
+	/**
+	 * 刷新会话页面
+	 */
 	private void refreshPage() {
 		if (uid != null) {
 			mChatMsgViewAdapter.initChat(EntboostCache.getChatMsgs(uid));
@@ -83,6 +98,9 @@ public class ChatActivity extends EbActivity {
 		mMsgListView.setSelection(mMsgListView.getBottom());
 	}
 
+	/**
+	 * 发送消息的状态发生改变
+	 */
 	@Override
 	public void onSendStatusChanged(ChatRoomRichMsg msg) {
 		refreshPage();
@@ -93,15 +111,29 @@ public class ChatActivity extends EbActivity {
 		super.onCreate(savedInstanceState);
 		setAbContentView(R.layout.activity_chat);
 		AbTitleBar titleBar = this.getTitleBar();
-		titleBar.setBackgroundResource(R.drawable.title_bar);
-		titleBar.setTitleText(this.getIntent().getStringExtra(INTENT_TITLE));
-		titleBar.setLogo(R.drawable.entlogo);
+		title = this.getIntent().getStringExtra(INTENT_TITLE);
+		titleBar.setTitleText(title);
 		uid = this.getIntent().getLongExtra(INTENT_UID, -1);
-		if (uid != null) {
-			EntboostCache.readMsg(uid);
+		if (uid > 0) {
+			EntboostCache.readMsg(uid);//设置消息已读
 		}
 		chattype = this.getIntent().getIntExtra(INTENT_CHATTYPE,
 				CHATTYPE_PERSON);
+		if (chattype == CHATTYPE_PERSON) {
+			//增加右上角会话对方的名片信息按钮
+			this.getTitleBar().addRightImageButton(R.drawable.uitb_20, null,
+					new PopMenuItem(new PopMenuItemOnClickListener() {
+
+						@Override
+						public void onItemClick() {
+							Intent intent = new Intent(ChatActivity.this,
+									DefaultUserInfoActivity.class);
+							intent.putExtra("uid", uid);
+							startActivity(intent);
+						}
+
+					}));
+		}
 		mContentEdit = (EditText) findViewById(R.id.content);
 		sendBtn = (Button) findViewById(R.id.sendBtn);
 		voiceImg = (ImageView) this.findViewById(R.id.imageViewvoice);
@@ -154,7 +186,7 @@ public class ChatActivity extends EbActivity {
 							}
 
 						}
-						mChatMsgViewAdapter.notifyDataSetChanged();
+						refreshPage();
 					}
 					break;
 				}
@@ -240,30 +272,31 @@ public class ChatActivity extends EbActivity {
 						EntboostCM.sendGroupText(uid, text);
 					}
 				}
-				mChatMsgViewAdapter.notifyDataSetChanged();
+				refreshPage();
 				// 清空文本框
 				mContentEdit.setText("");
 				mMsgListView.setSelection(mMsgListView.getBottom());
-				View view = getWindow().peekDecorView();
-				if (view != null) {
-					InputMethodManager inputmanger = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-					inputmanger.hideSoftInputFromWindow(view.getWindowToken(),
-							0);
-				}
+				// View view = getWindow().peekDecorView();
+				// if (view != null) {
+				// InputMethodManager inputmanger = (InputMethodManager)
+				// getSystemService(Context.INPUT_METHOD_SERVICE);
+				// inputmanger.hideSoftInputFromWindow(view.getWindowToken(),
+				// 0);
+				// }
 			}
 
 		});
 
 		mMsgListView = (ListView) this.findViewById(R.id.mListView);
 		if (chattype == CHATTYPE_PERSON) {
-			EntboostCM.loadPersonChatDiscCache(uid);
+			EntboostCache.loadPersonChatMsg(uid);//加载已有缓存会话信息
 		} else {
-			EntboostCM.loadGroupChatDiscCache(uid);
+			EntboostCache.loadGroupChatMsg(uid);
 		}
 		mChatMsgViewAdapter = new ChatMsgViewAdapter(ChatActivity.this,
 				EntboostCache.getChatMsgs(uid));
 		mMsgListView.setAdapter(mChatMsgViewAdapter);
-		mMsgListView.setSelection(mMsgListView.getBottom());
+		mMsgListView.setSelection(mChatMsgViewAdapter.getCount() - 1);
 
 		expressionGriView = (GridView) this
 				.findViewById(R.id.expressionGridView);
@@ -374,14 +407,7 @@ public class ChatActivity extends EbActivity {
 				EntboostCM.sendGroupPic(uid, picUri);
 			}
 		}
-
-		mChatMsgViewAdapter.notifyDataSetChanged();
-	}
-
-	@Override
-	protected void onStop() {
-		super.onStop();
-		EntboostCache.saveChatCache();
+		refreshPage();
 	}
 
 }

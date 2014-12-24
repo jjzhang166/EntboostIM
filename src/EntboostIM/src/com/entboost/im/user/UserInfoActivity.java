@@ -2,7 +2,6 @@ package com.entboost.im.user;
 
 import net.yunim.service.EntboostCache;
 import net.yunim.service.entity.AccountInfo;
-import net.yunim.utils.UIUtils;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -38,11 +37,6 @@ public class UserInfoActivity extends EbActivity {
 		info_username.setText(user.getUsername());
 		info_description.setText(user.getDescription());
 	}
-	
-	@OnClick(R.id.info_header)
-	public void openInfoHeader(View view){
-		UIUtils.showToast(this, "更换头像功能正在建设中...");
-	}
 
 	@OnClick(R.id.info_name_layout)
 	public void openInfoNameEdit(View view) {
@@ -51,7 +45,7 @@ public class UserInfoActivity extends EbActivity {
 				| Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		startActivity(intent);
 	}
-	
+
 	@OnClick(R.id.info_description_layout)
 	public void openInfoDescriptionEdit(View view) {
 		Intent intent = new Intent(this, InfoDescriptionEditActivity.class);

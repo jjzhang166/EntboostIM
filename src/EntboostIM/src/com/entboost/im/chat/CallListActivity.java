@@ -13,10 +13,13 @@ public class CallListActivity extends EbActivity {
 	private ListView listView;
 	private CallAdapter callAdapter;
 
+	/**
+	 * 呼叫超时
+	 */
 	@Override
 	public void onCallTimeout(CardInfo arg0) {
 		super.onCallTimeout(arg0);
-		callAdapter.setList(EntboostCache.getCallCards());
+		callAdapter.setList(EntboostCache.getAllDealCallInfos());
 		callAdapter.notifyDataSetChanged();
 	}
 
@@ -26,7 +29,7 @@ public class CallListActivity extends EbActivity {
 		setAbContentView(R.layout.activity_call_list);
 		listView = (ListView) findViewById(R.id.mListView);
 		callAdapter = new CallAdapter(this, this.mInflater,
-				EntboostCache.getCallCards());
+				EntboostCache.getAllDealCallInfos());
 		listView.setAdapter(callAdapter);
 	}
 

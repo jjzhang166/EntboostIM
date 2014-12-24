@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
+    android:background="@color/mainPageBG"
     android:orientation="vertical" >
 
     <LinearLayout
@@ -15,7 +16,7 @@
             android:id="@+id/sendTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@color/gray_light"
+            android:background="@drawable/chat_tip"
             android:gravity="center_vertical"
             android:padding="5dip"
             android:textColor="@color/white"
@@ -42,57 +43,68 @@
                 android:layout_width="45dp"
                 android:layout_height="45dp"
                 android:layout_gravity="center_horizontal"
-                android:background="@drawable/head"
                 android:clickable="true" />
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/chatAttach"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/photo_bg"
+            android:layout_toLeftOf="@+id/userLayout"
+            android:visibility="gone" />
 
         <LinearLayout
             android:id="@+id/chatLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="10dip"
-            android:layout_marginLeft="20dip"
-            android:layout_marginRight="20dip"
+            android:layout_marginRight="10dp"
             android:layout_toLeftOf="@+id/userLayout"
-            android:background="@drawable/chat_right_bg"
+            android:background="@drawable/r"
             android:orientation="horizontal" >
 
             <ImageView
                 android:id="@+id/voicetip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@android:drawable/ic_lock_silent_mode_off" 
-                android:visibility="gone"
-                android:layout_gravity="center_vertical"/>
+                android:layout_gravity="center_vertical"
+                android:padding="5dp"
+                android:src="@drawable/uitb_94"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/chatContent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
                 android:clickable="true"
-                android:textColor="@color/gray_black"
-                android:textSize="16sp" 
-                android:layout_gravity="center_vertical"/>
-
-            <ImageView
-                android:id="@+id/chatAttach"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="5dip"
-                android:background="@drawable/photo_bg"
-                android:clickable="true"
-                android:visibility="gone" />
+                android:padding="5dp"
+                android:textColor="#18611f"
+                android:textSize="16sp" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/sendName"
+        <ProgressBar
+            android:id="@+id/sendingProgress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="30dip"
+            android:layout_height="30dip"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@+id/chatLayout"
+            android:layout_marginRight="10dp"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/errorImg"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_below="@+id/userLayout"
-            android:textAppearance="?android:attr/textAppearanceSmall" />
-
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@+id/sendingProgress"
+            android:background="@drawable/error"
+            android:contentDescription="@string/msg_error_send"
+            android:layout_marginRight="10dp"
+            android:visibility="gone" />
     </RelativeLayout>
 
 </LinearLayout>

@@ -17,7 +17,7 @@
         android:src="@drawable/add_btn" />
 
     <TextView
-        android:id="@+id/name"
+        android:id="@+id/item_add_contact_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
