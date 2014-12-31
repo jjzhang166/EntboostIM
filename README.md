@@ -5,7 +5,7 @@
 
 EntboostIM-v1.1.20150101
 ----------
-支持的恩布私有云服务器版本v1.8   [下载](http://doc.entboost.com/index.php/Downloads)
+支持的恩布私有云服务器版本v1.9   [下载](http://doc.entboost.com/index.php/Downloads)
 - 增加接收系统广播消息的功能
 - 修改部分情况下已读状态无法保存的情况
 - 修改个人群组列表无法显示数据的问题
