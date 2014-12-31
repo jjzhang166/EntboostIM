@@ -3,6 +3,15 @@
 * [恩布互联技术论坛](http://forum.entboost.com/forum.php)
 * [企业IM私有云下载](http://doc.entboost.com/index.php/Downloads)
 
+EntboostIM-v1.1.20150101
+----------
+支持的恩布私有云服务器版本v1.8   [下载](http://doc.entboost.com/index.php/Downloads)
+- 增加接收系统广播消息的功能
+- 修改部分情况下已读状态无法保存的情况
+- 修改个人群组列表无法显示数据的问题
+- 修改在线状态的异常
+- 修改群组成员搜索抛出异常的问题
+
 EntboostIM-v1.1.20141224
 ----------
 支持的恩布私有云服务器版本v1.8   [下载](http://doc.entboost.com/index.php/Downloads)
@@ -36,5 +45,4 @@ EntboostIM-v1.1
 - 增加系统监听接口
 - 添加登录前，可以修改登录服务器地址的功能
 - 消息延迟或发送失败，可以重发消息
-- 优化部分功能API 
-
+- 优化部分功能API
