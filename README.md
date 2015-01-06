@@ -3,6 +3,14 @@
 * [恩布互联技术论坛](http://forum.entboost.com/forum.php)
 * [企业IM私有云下载](http://doc.entboost.com/index.php/Downloads)
 
+EntboostIM-v1.1.20150106
+----------
+支持的恩布私有云服务器版本v1.9   [下载](http://doc.entboost.com/index.php/Downloads)
+- 修改登录时密码输入错误会抛异常的问题
+- 优化主界面滑动的效果
+- 优化断网重连功能
+- 优化加载群组成员，增加重新加载的功能
+
 EntboostIM-v1.1.20150101
 ----------
 支持的恩布私有云服务器版本v1.9   [下载](http://doc.entboost.com/index.php/Downloads)
