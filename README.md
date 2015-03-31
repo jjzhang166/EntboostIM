@@ -1,7 +1,15 @@
-##EntboostIM：跨平台、跨应用的实时通讯平台(android版本)
+﻿##EntboostIM：跨平台、跨应用的实时通讯平台(android版本)
 * [恩布互联网站](http://www.entboost.com)
 * [恩布互联技术论坛](http://forum.entboost.com/forum.php)
 * [企业IM私有云下载](http://doc.entboost.com/index.php/Downloads)
+
+EntboostIM-v1.3.0.100
+----------
+支持的恩布私有云服务器版本v1.12   [下载](http://doc.entboost.com/index.php/Downloads)
+- 增加文件收发的功能
+- 增加修改联系人分组名称的功能
+- 修改企业部门和成员的显示方式
+- 补充联系人信息展示
 
 EntboostIM-v1.1.20150106
 ----------
