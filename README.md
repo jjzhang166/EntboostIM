@@ -3,6 +3,12 @@
 * [恩布互联技术论坛](http://forum.entboost.com/forum.php)
 * [企业IM私有云下载](http://doc.entboost.com/index.php/Downloads)
 
+EntboostIM-v1.3.0.109
+----------
+支持的恩布私有云服务器版本v1.15   [下载](http://doc.entboost.com/index.php/Downloads)
+- 增加接收文件列表浏览界面
+- 修正已知BUG
+
 EntboostIM-v1.3.0.100
 ----------
 支持的恩布私有云服务器版本v1.12   [下载](http://doc.entboost.com/index.php/Downloads)
