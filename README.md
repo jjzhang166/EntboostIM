@@ -3,10 +3,13 @@
 * [恩布互联技术论坛](http://forum.entboost.com/forum.php)
 * [企业IM私有云下载](http://doc.entboost.com/index.php/Downloads)
 
-EntboostIM-v1.3.0.109
+EntboostIM-v1.4.0.110
 ----------
 支持的恩布私有云服务器版本v1.15   [下载](http://doc.entboost.com/index.php/Downloads)
 - 增加接收文件列表浏览界面
+- 修复帐号不能识别前面带“@”的帐号
+- 修复不能加载个人新加入/被删除的部门或项目组
+- 优化群组操作的同步刷新
 - 修正已知BUG
 
 EntboostIM-v1.3.0.100
