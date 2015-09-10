@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.entboost.im"
+    android:versionCode="1"
+    android:versionName="1.4.1.124" >
+
+    <uses-sdk
+        android:minSdkVersion="9"
+        android:targetSdkVersion="18" />
+
+    <!-- 允许应用程序联网 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 检测网络状态 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- 获取用户手机的IMEI，用来唯一的标识用户 -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- 缓存资源优先存入SDcard -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- 读取SDcard内容 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- 记录语音 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- 创建桌面快捷方式 -->
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
+
+    <application
+        android:name="com.entboost.im.global.MyApplication"
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.entboost.im.user.LoginActivity"
+            android:label="@string/loginTitle"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.NoTitleBar" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.MainActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.chat.ChatActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.user.RegisterActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_register" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.user.UserInfoActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_user_info" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.user.InfoNameEditActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_info_name_edit" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.user.InfoDescriptionEditActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_info_description_edit" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.contact.ContactInfoActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_contact_info" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.setting.ChangePWDActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_change_pwd" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.contact.ContactNameEditActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_contact_name_edit" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.contact.ContactDescriptionActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_contact_description" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.department.DepartmentActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_department" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.department.DepartmentInfoActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_department_info" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.persongroup.PersonGroupInfoActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_persongroup_info" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.department.MemberInfoActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_member_info" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.WelcomeActivity"
+            android:label="@string/title_activity_welcome"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.entboost.im.contact.SearchContactActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_search_contact" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.chat.CallListActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_call_list" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.contact.AddContactActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_add_contact" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.contact.ContactGroupActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_contact_group" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.setting.SetLogonServiceAddrActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_set_logon_service_addr" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.department.SelectHeadImgActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_select_head_img" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.department.MemberListActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_member_list" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.function.FunctionMainActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_function_main" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.contact.DefaultUserInfoActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_default_user_info" >
+        </activity>
+
+        <service android:name="net.yunim.service.EbClientService" >
+        </service>
+
+        <activity
+            android:name="com.entboost.im.message.BroadcastMessageListActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_broadcast_message_list" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.message.BroadcastDetailActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_broadcast_detail" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.chat.OnlieChatMsgActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_onlie_chat_msg" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.persongroup.PersonGroupEditActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_person_group_edit" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.persongroup.PersonGroupSelectActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_person_group_select" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.persongroup.MemberSelectActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_member_select" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.contact.SelectContactGroupActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_select_contact_group" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.department.DepartmentListActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_department_list" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.chat.FileListActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_file_list" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.setting.AppVerActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_app_ver" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.department.EditGroupNameActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_edit_group_name" >
+        </activity>
+    </application>
+
+</manifest>
