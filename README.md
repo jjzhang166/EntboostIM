@@ -3,6 +3,15 @@
 * [恩布互联技术论坛](http://forum.entboost.com/forum.php)
 * [企业IM私有云下载](http://doc.entboost.com/index.php/Downloads)
 
+EntboostIM-v1.4.2.129
+----------
+支持的恩布私有云服务器版本v1.18   [下载](http://doc.entboost.com/index.php/Downloads)
+- 增加部门和群组的修改
+- 优化加载群组在线人数功能
+- 密码验证增加PBKDF2验证方式
+- 增加支持邮箱帐号直接登录
+- 其他界面优化及修正已知BUG
+
 EntboostIM-v1.4.0.110
 ----------
 支持的恩布私有云服务器版本v1.15   [下载](http://doc.entboost.com/index.php/Downloads)
