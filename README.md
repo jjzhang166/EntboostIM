@@ -3,6 +3,12 @@
 * [恩布互联技术论坛](http://forum.entboost.com/forum.php)
 * [企业IM私有云下载](http://doc.entboost.com/index.php/Downloads)
 
+EntboostIM-v1.4.3.133
+----------
+支持的恩布私有云服务器版本v1.20   [下载](http://doc.entboost.com/index.php/Downloads)
+- 配合 1.20 恩布服务端版本更新
+- 性能优化和修正已知BUG；
+
 EntboostIM-v1.4.2.129
 ----------
 支持的恩布私有云服务器版本v1.18   [下载](http://doc.entboost.com/index.php/Downloads)
