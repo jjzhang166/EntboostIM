@@ -7,6 +7,7 @@ EntboostIM-v1.4.3.133
 ----------
 支持的恩布私有云服务器版本v1.20   [下载](http://doc.entboost.com/index.php/Downloads)
 - 配合 1.20 恩布服务端版本更新
+- 美化登录界面和解决临时讨论组一个操作异常；
 - 性能优化和修正已知BUG；
 
 EntboostIM-v1.4.2.129
