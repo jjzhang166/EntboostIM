@@ -1,7 +1,12 @@
-﻿##EntboostIM：跨平台、跨应用的实时通讯平台(android版本)
-* [恩布互联网站](http://www.entboost.com)
-* [恩布互联技术论坛](http://forum.entboost.com/forum.php)
+﻿##EntboostIM：恩布开源企业IM(android版本)
+* [恩布网站](http://www.entboost.com)
 * [企业IM私有云下载](http://doc.entboost.com/index.php/Downloads)
+
+EntboostIM-v1.4.5.151
+----------
+支持的恩布私有云服务器版本v1.22   [下载](http://doc.entboost.com/index.php/Downloads)
+- 完美实现网络掉线、信号不好、服务端重启等各种情况，能实现自动重新登录，正常收发聊天消息；
+- 解决某些手机型号，异常退出问题，提高稳定性；
 
 EntboostIM-v1.4.3.133
 ----------
