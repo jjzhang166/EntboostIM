@@ -1,5 +1,7 @@
 package com.entboost.im.contact;
 
+import java.util.List;
+
 import net.yunim.service.EntboostCache;
 import net.yunim.service.EntboostUM;
 import net.yunim.service.entity.AppAccountInfo;
@@ -117,39 +119,69 @@ public class FriendMainFragment extends EbFragment {
 			} else if (selectPage == SELECTPAGE_MYDEPARTMENT) {
 				notifyDepartmentChanged(true, null);
 			} else if (selectPage == SELECTPAGE_ENT) {
-				notifyEntChanged(true, null);
+				notifyEntChanged(true, null, false, false, false);
 			}
 		} else {
 			notifyContactChanged(false);
 			notifyGroupChanged(false, null);
 			notifyDepartmentChanged(false, null);
-			notifyEntChanged(false, null);
+			notifyEntChanged(false, null, false, false, false);
 		}
 	}
 
-	public void notifyEntChanged(boolean switchView, Long groupid) {
+	/**
+	 * 响应更新企业架构视图
+	 * @param switchView 是否把该视图切换至前台
+	 * @param groupid 群组编号
+	 * @param removeGroup 是否删除部门
+	 * @param updateGroup 是否新增、更新部门
+	 * @param modifyMember 是否成员变更
+	 */
+	public void notifyEntChanged(boolean switchView, Long groupid, boolean removeGroup, boolean updateGroup, boolean modifyMember) {
 		if (entAdapter!=null) {
-			entAdapter.setInput(EntboostCache.getRootDepartmentInfos());
+			List<DepartmentInfo> rootDepInfos = EntboostCache.getRootDepartmentInfos(); 
+			entAdapter.setInput(rootDepInfos);
+			
 			if (groupid!=null) {
-				int groupPosition = entAdapter.getGroupPosition(groupid);
-				if (groupPosition>-1 && entlistView.isGroupExpanded(groupPosition))
-					entAdapter.setMembers(groupid, false);
+				if (removeGroup) { //解散部门
+					entAdapter.removeDepartmentInfoLeafNode(groupid);
+				} else if (updateGroup) { //新增或更新部门
+					GroupInfo group = EntboostCache.getGroup(groupid);
+					//遍历根部门列表，以寻找对应的上级部门
+					if (group!=null && group instanceof DepartmentInfo && group.getParent_code()!=null && group.getParent_code()>0) {
+						for (DepartmentInfo depInfo : rootDepInfos) {
+							if (depInfo.getDep_code()-group.getParent_code()==0) {
+								int groupPosition = entAdapter.getGroupPosition(depInfo.getDep_code());
+								if (groupPosition>-1 && entlistView.isGroupExpanded(groupPosition))
+									entAdapter.setMembers(depInfo.getDep_code(), true);
+								break;
+							}
+						}
+					}
+				} else if (modifyMember) { //新增、更新、删除成员
+					int groupPosition = entAdapter.getGroupPosition(groupid);
+					if (groupPosition>-1 && entlistView.isGroupExpanded(groupPosition))
+						entAdapter.setMembers(groupid, true);
+				} else { //其它情况
+					int groupPosition = entAdapter.getGroupPosition(groupid);
+					if (groupPosition>-1 && entlistView.isGroupExpanded(groupPosition))
+						entAdapter.setMembers(groupid, false);
+				}
 			}
 			
 			entAdapter.notifyDataSetChanged();
 		}
 		
-		if (switchView) {
-			EnterpriseInfo ent = EntboostCache.getEnterpriseInfo();
-			if (ent != null) {
-				int[] counts = EntboostCache.getEnt_online_state();
-				String memberCountStr = " [" + counts[1] + "/" + counts[0] + "]";
-				text_listname.setText(ent.getEnt_name()+memberCountStr);
-			} else {
-				text_listname.setText("企业架构");
-			}
-			
+		if (switchView)
 			entlistView.setVisibility(View.VISIBLE);
+		
+		EnterpriseInfo ent = EntboostCache.getEnterpriseInfo();
+		if (ent != null) {
+			int[] counts = EntboostCache.getEnt_online_state();
+			String memberCountStr = " [" + counts[1] + "/" + counts[0] + "]";
+			text_listname.setText(ent.getEnt_name()+memberCountStr);
+		} else {
+			text_listname.setText("企业架构");
 		}
 	}
 
@@ -220,7 +252,7 @@ public class FriendMainFragment extends EbFragment {
 				entAdapter.setLoading(depCode, true);
 				EntboostUM.loadMembers(group.getDep_code(), new LoadAllMemberListener() {
 					@Override
-					public void onFailure(final String errMsg) {
+					public void onFailure(int code, final String errMsg) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {
@@ -237,7 +269,7 @@ public class FriendMainFragment extends EbFragment {
 							public void run() {
 								entAdapter.setLoading(depCode, false);
 								entAdapter.setMembers(group.getDep_code(), true);
-								notifyEntChanged(true, null);
+								notifyEntChanged(true, null, false, false, false);
 							}
 						});
 					}
@@ -292,7 +324,7 @@ public class FriendMainFragment extends EbFragment {
 				departmentAdapter.setLoading(depCode, true);
 				EntboostUM.loadMembers(depCode, new LoadAllMemberListener() {
 					@Override
-					public void onFailure(final String errMsg) {
+					public void onFailure(int code, final String errMsg) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {
@@ -356,7 +388,7 @@ public class FriendMainFragment extends EbFragment {
 				groupAdapter.setLoading(depCode, true);
 				EntboostUM.loadMembers(group.getDep_code(), new LoadAllMemberListener() {
 					@Override
-					public void onFailure(final String errMsg) {
+					public void onFailure(int code, final String errMsg) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {
@@ -379,14 +411,12 @@ public class FriendMainFragment extends EbFragment {
 					}
 				});
 			}
-
 		};
 		
 		childListener = new ExpandableListView.OnChildClickListener() {
 			@Override
 			public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-				Object obj = groupAdapter
-						.getChild(groupPosition, childPosition);
+				Object obj = groupAdapter.getChild(groupPosition, childPosition);
 				MemberInfo memberInfo = (MemberInfo) obj;
 				if (memberInfo != null) {
 					if (memberInfo.getEmp_uid() - EntboostCache.getUid() == 0) {
@@ -404,6 +434,7 @@ public class FriendMainFragment extends EbFragment {
 				return true;
 			}
 		};
+		
 		grouplistView.setAdapter(groupAdapter);
 		grouplistView.setOnChildClickListener(childListener);
 		grouplistView.setOnGroupExpandListener(personGroupListener);
@@ -481,7 +512,7 @@ public class FriendMainFragment extends EbFragment {
 				refreshPage(true);
 				EntboostUM.loadEnterprise(new LoadEnterpriseListener() {
 					@Override
-					public void onFailure(String errMsg) {
+					public void onFailure(int code, String errMsg) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {

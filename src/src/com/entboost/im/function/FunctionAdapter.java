@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Vector;
 
 import net.yunim.service.entity.FuncInfo;
-import net.yunim.utils.ResourceUtils;
+import net.yunim.utils.YIResourceUtils;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -72,7 +72,7 @@ public class FunctionAdapter extends BaseAdapter {
 		FuncInfo funcInfo = (FuncInfo) getItem(position);
 		holder.itemsTitle.setText(funcInfo.getFunc_name());
 		if (StringUtils.isNotBlank(funcInfo.getIcon_res_id())) {
-			Bitmap img = ResourceUtils.getHeadBitmap(Long.valueOf(funcInfo.getIcon_res_id()));
+			Bitmap img = YIResourceUtils.getHeadBitmap(Long.valueOf(funcInfo.getIcon_res_id()));
 			if (img != null) {
 				holder.itemsIcon.setImageBitmap(img);
 			} else {

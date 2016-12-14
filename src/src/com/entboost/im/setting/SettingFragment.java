@@ -3,7 +3,7 @@ package com.entboost.im.setting;
 import net.yunim.service.EntboostCache;
 import net.yunim.service.EntboostLC;
 import net.yunim.service.entity.AccountInfo;
-import net.yunim.utils.ResourceUtils;
+import net.yunim.utils.YIResourceUtils;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -28,25 +28,32 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 
 public class SettingFragment extends EbFragment {
 
+	private TextView userText;
+	private ImageView userHead;
+	
 	@Override
 	public void onResume() {
 		super.onResume();
-		// 显示自己的默认名片头像
-		final ImageView userHead = (ImageView) this.getActivity().findViewById(R.id.user_head);
+		
 		AccountInfo user = EntboostCache.getUser();
-		userHead.setFocusable(false);
-		Bitmap img = ResourceUtils.getHeadBitmap(user.getHead_rid());
+		// 当前用户名称
+		userText.setText(user.getUsername());
+		// 当前用户默认名片头像
+		Bitmap img = YIResourceUtils.getHeadBitmap(user.getHead_rid());
 		if (img != null) {
 			userHead.setImageBitmap(img);
 		} else {
 			ImageLoader.getInstance().displayImage(user.getHeadUrl(), userHead, MyApplication.getInstance().getUserImgOptions());
 		}
-		TextView userText = (TextView) this.getActivity().findViewById(R.id.user_name);
-		userText.setText(user.getUsername());
 	}
 	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = onCreateEbView(R.layout.fragment_setting, inflater, container);
+		
+		userText = (TextView) view.findViewById(R.id.user_name);
+		userHead = (ImageView) view.findViewById(R.id.user_head);
+		userHead.setFocusable(false);
+		
 		view.findViewById(R.id.user_layout).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -91,6 +98,9 @@ public class SettingFragment extends EbFragment {
 						activity.finish();
 						Intent intent = new Intent(activity, LoginActivity.class);
 						startActivity(intent);
+						
+						//清除通知栏消息
+						UIUtils.cancelNotificationMsg(activity);
 					}
 				});
 				
@@ -100,6 +110,9 @@ public class SettingFragment extends EbFragment {
 						EntboostLC.exit();
 						activity.getBottomDialog().cancel();
 						activity.finish();
+
+						//清除通知栏消息
+						UIUtils.cancelNotificationMsg(activity);
 						//退出所有Activity
 						MyActivityManager.getInstance().clearAllActivity();
 					}

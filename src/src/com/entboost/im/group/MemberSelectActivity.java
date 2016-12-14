@@ -92,7 +92,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 	//0=选取多个成员
 	//1=选取一个成员
 	private int selectType = 0;
-	//除外的用户编号列表(不允许选中这些编号，暂时仅对单选视图有效)
+	//除外的用户编号列表(不允许选中这些编号)
 	private List<Long> excludeUids = new ArrayList<Long>();
 	
 	private long groupid;
@@ -283,15 +283,19 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 	}
 	
 	/**
-	 * 获取已选中的成员和联系人的列表
+	 * 判断联系人是否已被选中
+	 * @param contactInfo
 	 * @return
 	 */
-	public static List<Object> getSelectedMembersAndContacts() {
-		List<Object> selectedList = new ArrayList<Object>();
-		selectedList.addAll(MemberSelectActivity.getAllSelectedMembers());
-		selectedList.addAll(MemberSelectActivity.getSelectedContacts());
-		return selectedList;
+	public static boolean isContactSelected(ContactInfo contactInfo) {
+		for (ContactInfo ci : selectedContactInfos) {
+			if (ci.getCon_id() - contactInfo.getCon_id()==0) {
+				return true;
+			}
+		}
+		return false;
 	}
+	
 	/**
 	 * 判断成员是否已被选中
 	 * @param memberInfo 成员
@@ -308,6 +312,17 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * 获取已选中的成员和联系人的列表
+	 * @return
+	 */
+	public static List<Object> getSelectedMembersAndContacts() {
+		List<Object> selectedList = new ArrayList<Object>();
+		selectedList.addAll(MemberSelectActivity.getAllSelectedMembers());
+		selectedList.addAll(MemberSelectActivity.getSelectedContacts());
+		return selectedList;
 	}
 	
 	//设置"确认"按钮
@@ -430,7 +445,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 				
 				EntboostUM.addToPersonGroup(groupid, uids, new AddToPersonGroupListener() {
 					@Override
-					public void onFailure(final String errMsg) {
+					public void onFailure(int code, final String errMsg) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {
@@ -462,6 +477,8 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 	private void initEnt() {
 		entlistView = (ExpandableListView) findViewById(R.id.entlist);
 		entAdapter = new GroupAdapter<DepartmentInfo>(this, entlistView);
+		
+		entAdapter.setExcludeUids(excludeUids);
 		entAdapter.setSelectMember(true);
 		if (selectType==1)
 			entAdapter.setSelectOne(true);
@@ -474,7 +491,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 				final GroupInfo group = (GroupInfo) entAdapter.getGroup(groupPosition);
 				EntboostUM.loadMembers(group.getDep_code(), new LoadAllMemberListener() {
 					@Override
-					public void onFailure(final String errMsg) {
+					public void onFailure(int code, final String errMsg) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {
@@ -507,9 +524,8 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 					MemberInfo memberInfo = (MemberInfo) obj;
 					
 					if (selectType==0) {
-						ImageView selectImg = (ImageView) v
-								.findViewById(R.id.user_select);
-						if (selectImg.getVisibility() == View.GONE) {
+						ImageView selectImg = (ImageView) v.findViewById(R.id.user_select);
+						if (selectImg.getVisibility() == View.GONE || selectImg.getVisibility() == View.INVISIBLE) {
 							return true;
 						}
 						
@@ -526,7 +542,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 						}
 						
 						MemberSelectActivity.this.onSelectedMembersChange();
-					} else { 
+					} else {
 						if (!excludeUids.contains(memberInfo.getEmp_uid())) {
 							MemberSelectActivity.addSelectedMember(memberInfo);
 							MemberSelectActivity.this.onClickOneMember();
@@ -558,6 +574,8 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 	private void initMyDepartment() {
 		departmentlistView = (ExpandableListView) findViewById(R.id.departmentlist);
 		departmentAdapter = new GroupAdapter<DepartmentInfo>(this, departmentlistView);
+		
+		departmentAdapter.setExcludeUids(excludeUids);
 		departmentAdapter.setSelectMember(true);
 		if (selectType==1)
 			departmentAdapter.setSelectOne(true);
@@ -570,7 +588,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 				final GroupInfo group = (GroupInfo) departmentAdapter.getGroup(groupPosition);
 				EntboostUM.loadMembers(group.getDep_code(), new LoadAllMemberListener() {
 					@Override
-					public void onFailure(final String errMsg) {
+					public void onFailure(int code, final String errMsg) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {
@@ -598,32 +616,32 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 			@Override
 			public boolean onChildClick(ExpandableListView parent, View view, int groupPosition, int childPosition, long id) {
 				Object obj = departmentAdapter.getChild(groupPosition, childPosition);
-				if (checkSelfGroup(obj)) {
-					MemberInfo memberInfo = (MemberInfo) obj;
-
-					if (selectType==0) { //多选视图
-						ImageView selectImg = (ImageView) view.findViewById(R.id.user_select);
-						if (selectImg.getVisibility() == View.GONE) {
-							return true;
-						}
-						
-						Drawable srcImg = selectImg.getDrawable();
-						if (srcImg == null) {
-							selectImg.setImageResource(R.drawable.uitb_57);
-							MemberSelectActivity.addSelectedMember(memberInfo);
-						} else {
-							selectImg.setImageDrawable(null);
-							MemberSelectActivity.removeSelectedMember(memberInfo);
-						}
-						
-						MemberSelectActivity.this.onSelectedMembersChange();
-					} else { //单选视图
-						if (!excludeUids.contains(memberInfo.getEmp_uid())) {
-							MemberSelectActivity.addSelectedMember(memberInfo);
-							MemberSelectActivity.this.onClickOneMember();
-						}
+//				if (checkSelfGroup(obj)) {
+				MemberInfo memberInfo = (MemberInfo) obj;
+				
+				if (selectType==0) { //多选视图
+					ImageView selectImg = (ImageView) view.findViewById(R.id.user_select);
+					if (selectImg.getVisibility() == View.GONE || selectImg.getVisibility() == View.INVISIBLE) {
+						return true;
+					}
+					
+					Drawable srcImg = selectImg.getDrawable();
+					if (srcImg == null) {
+						selectImg.setImageResource(R.drawable.uitb_57);
+						MemberSelectActivity.addSelectedMember(memberInfo);
+					} else {
+						selectImg.setImageDrawable(null);
+						MemberSelectActivity.removeSelectedMember(memberInfo);
+					}
+					
+					MemberSelectActivity.this.onSelectedMembersChange();
+				} else { //单选视图
+					if (!excludeUids.contains(memberInfo.getEmp_uid())) {
+						MemberSelectActivity.addSelectedMember(memberInfo);
+						MemberSelectActivity.this.onClickOneMember();
 					}
 				}
+//				}
 				return true;
 			}
 		};
@@ -636,6 +654,8 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 	private void initGroup() {
 		grouplistView = (ExpandableListView) findViewById(R.id.grouplist);
 		groupAdapter = new GroupAdapter<PersonGroupInfo>(this, grouplistView);
+		
+		groupAdapter.setExcludeUids(excludeUids);
 		groupAdapter.setSelectMember(true);
 		if (selectType==1)
 			groupAdapter.setSelectOne(true);
@@ -648,7 +668,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 				final GroupInfo group = (GroupInfo) groupAdapter.getGroup(groupPosition);
 				EntboostUM.loadMembers(group.getDep_code(), new LoadAllMemberListener() {
 					@Override
-					public void onFailure(final String errMsg) {
+					public void onFailure(int code, final String errMsg) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {
@@ -682,7 +702,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 				
 				if (selectType==0) { //多选视图
 					ImageView selectImg = (ImageView) view.findViewById(R.id.user_select);
-					if (selectImg.getVisibility() == View.GONE) {
+					if (selectImg.getVisibility() == View.GONE || selectImg.getVisibility() == View.INVISIBLE) {
 						return true;
 					}
 					
@@ -714,6 +734,8 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 	private void initContactView() {
 		contactlistView = (ExpandableListView) findViewById(R.id.friendlist);
 		friendAdapter = new ContactAdapter(this, contactlistView);
+		
+		friendAdapter.setExcludeUids(excludeUids);
 		friendAdapter.setSelectMember(true);
 		if (selectType==1)
 			friendAdapter.setSelectOne(true);
@@ -729,7 +751,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 					
 					if (selectType==0) {
 						ImageView selectImg = (ImageView) v.findViewById(R.id.user_select);
-						if (selectImg.getVisibility() == View.GONE) {
+						if (selectImg.getVisibility() == View.GONE || selectImg.getVisibility() == View.INVISIBLE) {
 							return true;
 						}
 						Drawable srcImg = selectImg.getDrawable();
@@ -843,7 +865,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 				refreshPage();
 				EntboostUM.loadEnterprise(new LoadEnterpriseListener() {
 					@Override
-					public void onFailure(String errMsg) {
+					public void onFailure(int code, String errMsg) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {

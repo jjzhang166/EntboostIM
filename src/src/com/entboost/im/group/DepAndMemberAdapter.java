@@ -10,7 +10,7 @@ import net.yunim.service.constants.EB_USER_LINE_STATE;
 import net.yunim.service.entity.DepartmentInfo;
 import net.yunim.service.entity.MemberInfo;
 import net.yunim.service.listener.LoadAllMemberListener;
-import net.yunim.utils.ResourceUtils;
+import net.yunim.utils.YIResourceUtils;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -43,6 +43,8 @@ public class DepAndMemberAdapter extends BaseAdapter {
 	private List<Object> groupMemberInfos = new ArrayList<Object>();
 	private boolean selectMember; //是否选择人员视图
 	private boolean selectOne = false; //是否单选
+	//除外的用户编号列表(不允许选中这些编号)
+	private List<Long> excludeUids = new ArrayList<Long>();
 	
 	public DepAndMemberAdapter(Context context) {
 		mContext = context;
@@ -58,6 +60,10 @@ public class DepAndMemberAdapter extends BaseAdapter {
 
 	public void setSelectOne(boolean selectOne) {
 		this.selectOne = selectOne;
+	}
+	
+	public void setExcludeUids(List<Long> excludeUids) {
+		this.excludeUids = excludeUids;
 	}
 
 	public void setMembers(Long groupid) {
@@ -102,23 +108,25 @@ public class DepAndMemberAdapter extends BaseAdapter {
 			}
 			
 			final MemberInfo memberInfo = (MemberInfo) obj;
-			//处理点击头像事件
-			holder1.userImg.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					Intent intent = new Intent(mContext, MemberInfoActivity.class);
-					if (memberInfo != null) {
-						intent.putExtra("memberCode", memberInfo.getEmp_code());
-						if (memberInfo.getEmp_uid() - EntboostCache.getUid() == 0) {
-							intent.putExtra("selfFlag", true);
+			//处理点击头像事件；选择视图不允许点击
+			if (!selectMember) {
+				holder1.userImg.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						Intent intent = new Intent(mContext, MemberInfoActivity.class);
+						if (memberInfo != null) {
+							intent.putExtra("memberCode", memberInfo.getEmp_code());
+							if (memberInfo.getEmp_uid() - EntboostCache.getUid() == 0) {
+								intent.putExtra("selfFlag", true);
+							}
+							mContext.startActivity(intent);
 						}
-						mContext.startActivity(intent);
 					}
-				}
-			});
+				});
+			}
 			
 			//设置头像
-			Bitmap img = ResourceUtils.getHeadBitmap(memberInfo.getH_r_id());
+			Bitmap img = YIResourceUtils.getHeadBitmap(memberInfo.getH_r_id());
 			if (img != null) {
 				if (memberInfo.getState() <= EB_USER_LINE_STATE.EB_LINE_STATE_OFFLINE
 						.getValue()) {
@@ -165,14 +173,15 @@ public class DepAndMemberAdapter extends BaseAdapter {
 			holder1.description.setText(memberInfo.getDescription());
 			
 			//在选择视图
-			if (selectMember && !selectOne) {
+			if (selectMember) {
 				holder1.user_select.setVisibility(View.VISIBLE);
-				if (memberInfo.getEmp_uid() - EntboostCache.getUid() == 0) {
+				
+				if (selectOne || excludeUids.contains(memberInfo.getEmp_uid())/*|| memberInfo.getEmp_uid() - EntboostCache.getUid() == 0*/) {
 					holder1.user_select.setVisibility(View.INVISIBLE);
-				} else {
-					if (MemberSelectActivity.isMemberSelected(memberInfo))
-						holder1.user_select.setImageResource(R.drawable.uitb_57);
 				}
+				
+				if (MemberSelectActivity.isMemberSelected(memberInfo))
+					holder1.user_select.setImageResource(R.drawable.uitb_57);
 			}
 			
 			// 改变名称颜色
@@ -285,7 +294,7 @@ public class DepAndMemberAdapter extends BaseAdapter {
 							UIUtils.showProgressDialog(mContext, "请稍后...");
 							EntboostUM.loadMembers(depCode, new LoadAllMemberListener() {
 								@Override
-								public void onFailure(final String errMsg) {
+								public void onFailure(int code, final String errMsg) {
 									HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 										@Override
 										public void run() {
@@ -302,8 +311,14 @@ public class DepAndMemberAdapter extends BaseAdapter {
 										public void run() {
 											List<MemberInfo> memberInfos = EntboostCache.getGroupMemberInfos(depCode);
 											if (memberInfos != null) {
-												MemberSelectActivity.addSelectedMembers(depCode, memberInfos);
 												MemberSelectActivity.addSelectedGroup(group);
+												//MemberSelectActivity.addSelectedMembers(depCode, memberInfos);
+												
+												//去除被过滤的用户
+												for (MemberInfo mi : memberInfos) {
+													if (!excludeUids.contains(mi.getEmp_uid()))
+														MemberSelectActivity.addSelectedMember(mi);
+												}
 												
 //												//触发变更回调事件
 //												if (selectedMemberListener!=null)

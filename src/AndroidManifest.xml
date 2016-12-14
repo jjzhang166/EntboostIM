@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.entboost.im"
     android:versionCode="1"
-    android:versionName="1.5.0.215" >
+    android:versionName="1.5.1.238" >
 
     <uses-sdk android:minSdkVersion="11" /> <!-- android:targetSdkVersion="15" -->
 	
@@ -60,6 +60,7 @@
         </activity> <!-- android:noHistory="false" -->
         <activity
             android:name="com.entboost.im.chat.ChatActivity"
+            android:windowSoftInputMode="adjustResize"
             android:screenOrientation="portrait" >
         </activity>
         <activity

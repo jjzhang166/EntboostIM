@@ -169,6 +169,7 @@ public class MainActivity extends EbMainActivity {
 		
 		settingFragment = new SettingFragment();
 		addView("设置", settingFragment, this.getResources().getDrawable(R.drawable.menu4), this.getResources().getDrawable(R.drawable.menu4_n));
+		
 		mBottomTabView.initItemsTip(R.drawable.tab_red_circle);
 		initMenu();
 		
@@ -252,53 +253,44 @@ public class MainActivity extends EbMainActivity {
 		super.onPause();
 	}
 	
+	//初始化右上角菜单
 	public void initMenu() {
 		PopMenuConfig config = new PopMenuConfig();
 		config.setBackground_resId(R.drawable.popmenu);
 		config.setTextColor(Color.WHITE);
 		config.setShowAsDropDownYoff(28);
 		
-		//主按钮一
-		this.getTitleBar().addRightImageButton(R.drawable.main_search, config,
-				new PopMenuItem("查找用户", new PopMenuItemOnClickListener() {
+		//主按钮一(查找用户)
+		this.getTitleBar().addRightImageButton(R.drawable.main_search, config, new PopMenuItem("查找用户", 
+			new PopMenuItemOnClickListener() {
+				@Override
+				public void onItemClick() {
+					Intent intent = new Intent(MainActivity.this, SearchContactActivity.class);
+					startActivity(intent);
+				}
 
-					@Override
-					public void onItemClick() {
-						Intent intent = new Intent(MainActivity.this,
-								SearchContactActivity.class);
-						startActivity(intent);
-					}
-
-				}));
+			}));
 		
-		//主按钮二
+		//主按钮二(弹出子菜单)
 		this.getTitleBar().addRightImageButton(R.drawable.main_add, config,
-			new PopMenuItem("添加联系人", 
-					R.drawable.menu_add_contact, R.layout.item_menu2,
+			new PopMenuItem("添加联系人", R.drawable.menu_add_contact, R.layout.item_menu2,
 					new PopMenuItemOnClickListener() {
-
+						
 						@Override
 						public void onItemClick() {
-							// Intent intent = new Intent(MainActivity.this,
-							// AddContactActivity.class);
-							// startActivity(intent);
-							FuncInfo funcInfo = EntboostCache
-									.getFindFuncInfo();
+							FuncInfo funcInfo = EntboostCache.getFindFuncInfo();
 							if (funcInfo != null) {
-								Intent intent = new Intent(
-										MainActivity.this,
-										FunctionMainActivity.class);
+								Intent intent = new Intent(MainActivity.this, FunctionMainActivity.class);
 								intent.putExtra("funcInfo", funcInfo);
 								startActivity(intent);
 							}
 						}
-
 					}),
 			new PopMenuItem("添加联系人分组",  R.drawable.menu_add_tempgroup, R.layout.item_menu2, new PopMenuItemOnClickListener() {
 				@Override
 				public void onItemClick() {
-					final EditText input = new EditText(
-							MainActivity.this);
+					final EditText input = new EditText(MainActivity.this);
+					
 					showDialog("添加分组", input, new OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
@@ -307,10 +299,11 @@ public class MainActivity extends EbMainActivity {
 								showToast("分组名称不能为空！");
 								return;
 							}
+							
 							showProgressDialog("正在添加分组！");
 							EntboostUM.addContactGroup(value, new EditGroupListener() {
 								@Override
-								public void onFailure(final String errMsg) {
+								public void onFailure(int code, final String errMsg) {
 									HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 										@Override
 										public void run() {
@@ -336,7 +329,6 @@ public class MainActivity extends EbMainActivity {
 						}
 					});
 				}
-
 			}),
 			new PopMenuItem("添加个人群组",R.drawable.menu_add_tempgroup, R.layout.item_menu2, new PopMenuItemOnClickListener() {
 				@Override
@@ -351,7 +343,6 @@ public class MainActivity extends EbMainActivity {
 					startActivity(intent);
 				}
 			}));
-
 	}
 
 	@Override
@@ -361,7 +352,7 @@ public class MainActivity extends EbMainActivity {
 		if (friendMainFragment!=null) {
 			friendMainFragment.notifyDepartmentChanged(false, depCode);
 			friendMainFragment.notifyGroupChanged(false, depCode);
-			friendMainFragment.notifyEntChanged(false, depCode);
+			friendMainFragment.notifyEntChanged(false, depCode, false, false, true);
 		}
 		
 		super.onAddMember(uid, empid, depCode);
@@ -374,7 +365,7 @@ public class MainActivity extends EbMainActivity {
 		if (friendMainFragment!=null) {
 			friendMainFragment.notifyDepartmentChanged(false, depCode);
 			friendMainFragment.notifyGroupChanged(false, depCode);
-			friendMainFragment.notifyEntChanged(false, depCode);
+			friendMainFragment.notifyEntChanged(false, depCode, false, false, true);
 		}
 		
 		super.onExitMember(uid, depCode);
@@ -387,7 +378,7 @@ public class MainActivity extends EbMainActivity {
 		if (friendMainFragment!=null) {
 			friendMainFragment.notifyDepartmentChanged(false, depCode);
 			friendMainFragment.notifyGroupChanged(false, depCode);
-			friendMainFragment.notifyEntChanged(false, depCode);
+			friendMainFragment.notifyEntChanged(false, depCode, false, false, true);
 		}
 		
 		super.onUpdateMember(uid, empid, depCode);
@@ -400,7 +391,7 @@ public class MainActivity extends EbMainActivity {
 		if (friendMainFragment!=null) {
 			friendMainFragment.notifyDepartmentChanged(false, depCode);
 			friendMainFragment.notifyGroupChanged(false, depCode);
-			friendMainFragment.notifyEntChanged(false, depCode);
+			friendMainFragment.notifyEntChanged(false, depCode, false, true, false);
 		}
 		
 		super.onUpdateGroup(depCode);
@@ -413,7 +404,7 @@ public class MainActivity extends EbMainActivity {
 		if (friendMainFragment!=null) {
 			friendMainFragment.notifyDepartmentChanged(false, depCode);
 			friendMainFragment.notifyGroupChanged(false, depCode);
-			friendMainFragment.notifyEntChanged(false, depCode);
+			friendMainFragment.notifyEntChanged(false, depCode, true, false, false);
 		}
 		
 		super.onDeleteGroup(depCode);
