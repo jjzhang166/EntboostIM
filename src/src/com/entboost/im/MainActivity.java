@@ -11,6 +11,7 @@ import net.yunim.service.listener.EditGroupListener;
 
 import org.apache.commons.lang3.StringUtils;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.KeyguardManager;
@@ -20,9 +21,11 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.provider.Settings;
 import android.widget.EditText;
 
 import com.entboost.Log4jLog;
@@ -152,6 +155,7 @@ public class MainActivity extends EbMainActivity {
 		super.onNewIntent(intent);
 	}
 	
+	@SuppressLint("NewApi")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		//Log4jLog.d(LONG_TAG, this.getClass().getName()+", activity push (in onCreate())");
@@ -177,6 +181,27 @@ public class MainActivity extends EbMainActivity {
 		PowerManager pm =(PowerManager)getSystemService(Context.POWER_SERVICE);
 		wakeLock =pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "entboost_cpu_lock");
 		wakeLock.acquire();
+		
+		//请求电池管理白名单
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			String packageName = this.getPackageName();
+			if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+				Intent intent = new Intent();
+				intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+			    intent.setData(Uri.parse("package:" + packageName));
+			    startActivity(intent);
+			}
+//			else {
+//				intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+//				startActivity(intent);
+//			}
+		}
+		
+//		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !pm.isIgnoringBatteryOptimizations(packageName)) {
+//			Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+//			intent.setData(Uri.parse(packageName));
+//			startActivity(intent);
+//		}
 	}
 	
 	//处理服务异常和未登陆状态

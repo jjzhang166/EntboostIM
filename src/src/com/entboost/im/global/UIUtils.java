@@ -8,6 +8,7 @@ import net.yunim.utils.YIResourceUtils;
 
 import org.apache.commons.lang3.StringUtils;
 
+import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.Dialog;
@@ -21,6 +22,7 @@ import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.text.Html;
 import android.text.Html.ImageGetter;
 import android.text.Spannable;
@@ -207,16 +209,36 @@ public class UIUtils {
 //	}
 	
 	//发送通知栏消息
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 	public static void sendNotificationMsg(Context context, int icon, CharSequence title, 
 			CharSequence content, int number, Intent notificationIntent) {
 		// 定义NotificationManager
 		NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-		Notification mNotification = new Notification(icon, "[" + title + "]" + content, System.currentTimeMillis());
-		mNotification.defaults = Notification.DEFAULT_SOUND;
+		
+		PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		
+		Notification.Builder builder = new Notification.Builder(context);
+		builder.setContentTitle("[" + title + "]" + content);
+		builder.setContentInfo("");
+		//builder.setContentText("主内容区");
+		//builder.setSmallIcon(R.mipmap.icon_demo);
+		//builder.setTicker("新消息");
+		//builder.setAutoCancel(true);
+		builder.setWhen(System.currentTimeMillis());
+		builder.setContentIntent(pendingIntent);
+		builder.setDefaults(Notification.DEFAULT_SOUND);
+		
+		//Notification mNotification = new Notification(icon, "[" + title + "]" + content, System.currentTimeMillis());
+		//mNotification.setLatestEventInfo(context, title, content, PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT));
+		//mNotification.defaults = Notification.DEFAULT_SOUND;
+		Notification mNotification = null;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			mNotification = builder.build();
+		} else {
+			mNotification = builder.getNotification();
+		}
+		
 		mNotification.flags = Notification.FLAG_AUTO_CANCEL;
-		// 第二个参数是打开通知栏后的标题， 第三个参数是通知内容
-		mNotification.setLatestEventInfo(context, title, content, PendingIntent.getActivity(context, 0, notificationIntent,
-						PendingIntent.FLAG_UPDATE_CURRENT));
 		
 		// if (mNotification.contentView != null) {
 		// AppAccountInfo appInfo = EntboostCache.getAppInfo();
