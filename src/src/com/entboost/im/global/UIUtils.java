@@ -218,10 +218,10 @@ public class UIUtils {
 		PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		
 		Notification.Builder builder = new Notification.Builder(context);
-		builder.setContentTitle("[" + title + "]" + content);
-		builder.setContentInfo("");
-		//builder.setContentText("主内容区");
-		//builder.setSmallIcon(R.mipmap.icon_demo);
+		builder.setContentTitle(title);
+		//builder.setContentInfo("");
+		builder.setContentText(content);
+		builder.setSmallIcon(R.drawable.ic_launcher);
 		//builder.setTicker("新消息");
 		//builder.setAutoCancel(true);
 		builder.setWhen(System.currentTimeMillis());

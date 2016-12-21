@@ -7,6 +7,7 @@ import net.yunim.service.EntboostCache;
 import net.yunim.service.EntboostUM;
 import net.yunim.service.constants.EB_MANAGER_LEVEL;
 import net.yunim.service.constants.EB_USER_LINE_STATE;
+import net.yunim.service.entity.AppAccountInfo;
 import net.yunim.service.entity.DepartmentInfo;
 import net.yunim.service.entity.MemberInfo;
 import net.yunim.service.listener.LoadAllMemberListener;
@@ -215,7 +216,18 @@ public class DepAndMemberAdapter extends BaseAdapter {
 			holder2.itemsHead.setVisibility(View.VISIBLE);
 			holder2.itemsProgress.setVisibility(View.GONE);
 			holder2.itemsHead.setImageResource(R.drawable.ui65new);
-			holder2.itemsText.setText(group.getDep_name() + group.getEmp_online_state());
+			
+			//名称+成员在线人数和成员人数
+			AppAccountInfo appInfo = EntboostCache.getAppInfo();
+			String formatedCountStr = " ";
+			if ((appInfo.getSystem_setting() & AppAccountInfo.SYSTEM_SETTING_VALUE_DISABLE_STATSUB_GROUP_MEMBER) 
+					!= AppAccountInfo.SYSTEM_SETTING_VALUE_DISABLE_STATSUB_GROUP_MEMBER) {
+				int count = EntboostCache.getDepartmentMemberCount(group.getDep_code(), true);
+				formatedCountStr = formatedCountStr + (count>0?("[" + EntboostCache.getDepartmentMemberOnlineCount(group.getDep_code(), true) + "/" + count + "]"):"");
+			} else {
+				formatedCountStr = formatedCountStr + (group.getEmp_count()>0?("[" + EntboostCache.getGroupOnlineCount(group.getDep_code()) + "/" + group.getEmp_count() + "]"):"");
+			}
+			holder2.itemsText.setText(group.getDep_name() + formatedCountStr);
 			
 			//最右边的按钮布局
 			RelativeLayout.LayoutParams layoutParams= new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT); 

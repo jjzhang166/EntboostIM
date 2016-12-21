@@ -56,6 +56,7 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 	private Context mContext;
 	private Map<Long, List<Comparable>> localGroupMemberInfos = new HashMap<Long, List<Comparable>>();
 	private List<T> groups = new ArrayList<T>();
+	
 	private boolean selectMember; //是否选择人员视图
 	private boolean selectOne = false; //是否单选
 	//除外的用户编号列表(不允许选中这些编号)
@@ -67,6 +68,13 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 	
 	//暂记录正在加载信息的群组
 	private Map<Long, Boolean> groupLoadings = new ConcurrentHashMap<Long, Boolean>();
+	
+	//是否统计子部门成员的人数
+	private boolean calculateSubDepartment;
+	
+	public void setCalculateSubDepartment(boolean calculateSubDepartment) {
+		this.calculateSubDepartment = calculateSubDepartment;
+	}
 
 	public void setSelectedMemberListener(SelectedMemberListener selectedMemberListener) {
 		this.selectedMemberListener = selectedMemberListener;
@@ -313,7 +321,8 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 			final DepartmentInfo group = (DepartmentInfo) obj;
 			holder2.itemsHead.setVisibility(View.VISIBLE);
 			holder2.itemsProgress.setVisibility(View.GONE);
-			holder2.itemsText.setText(group.getDep_name() + group.getEmp_online_state());
+			//名称+人数
+			holder2.itemsText.setText(group.getDep_name() + createFormatedStrOfGroupCount(group));
 			
 			//最右边的按钮布局
 			RelativeLayout.LayoutParams layoutParams= new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT); 
@@ -524,6 +533,20 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 		return -1;
 	}
 
+	//名称+成员在线人数和成员人数
+	private String createFormatedStrOfGroupCount(GroupInfo group) {
+		//名称+成员在线人数和成员人数
+		String formatedCountStr = " ";
+		if (calculateSubDepartment) {
+			int count = EntboostCache.getDepartmentMemberCount(group.getDep_code(), true);
+			formatedCountStr = formatedCountStr + (count>0?("[" + EntboostCache.getDepartmentMemberOnlineCount(group.getDep_code(), true) + "/" + count + "]"):"");
+		} else {
+			formatedCountStr = formatedCountStr + (group.getEmp_count()>0?("[" + EntboostCache.getGroupOnlineCount(group.getDep_code()) + "/" + group.getEmp_count() + "]"):"");
+		}
+		
+		return formatedCountStr;
+	}
+	
 	@Override
 	public View getGroupView(final int groupPosition, final boolean isExpanded, View convertView, ViewGroup parent) {
 		final GroupInfo group = (GroupInfo) getGroup(groupPosition);
@@ -564,8 +587,8 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 		
 		//折叠/展开标记
 		holder1.itemsHead.setImageResource(indentify);
-		//名称
-		holder1.itemsText.setText(group.getDep_name() + " " + group.getEmp_online_state());
+		//名称+人数
+		holder1.itemsText.setText(group.getDep_name() + createFormatedStrOfGroupCount(group));
 		
 		//最右边的按钮布局
 		RelativeLayout.LayoutParams layoutParams= new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT); 

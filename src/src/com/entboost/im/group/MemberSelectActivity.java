@@ -17,7 +17,7 @@ import net.yunim.service.entity.EnterpriseInfo;
 import net.yunim.service.entity.GroupInfo;
 import net.yunim.service.entity.MemberInfo;
 import net.yunim.service.entity.PersonGroupInfo;
-import net.yunim.service.listener.AddToPersonGroupListener;
+import net.yunim.service.listener.AddToGroupListener;
 import net.yunim.service.listener.LoadAllMemberListener;
 import net.yunim.service.listener.LoadEnterpriseListener;
 import android.content.Intent;
@@ -85,7 +85,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 	private HorizontalListView selectedListView;
 
 	private MemberSelectedAdapter selectedAdapter;
-
+	private TextView selected_count;
 	private Button selectedbtn;
 	
 	//人员选取类型
@@ -424,11 +424,22 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 		selectedbtn.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				showProgressDialog("邀请成员加入群组");
-				
 				Set<Long> uids = new HashSet<Long>();
 				//List<Object> selectedMap = MyApplication.getInstance().getSelectedUserList();
 				List<Object> selectedList = MemberSelectActivity.getSelectedMembersAndContacts();
+				
+				//检查选中情况
+				if (selectedList.size() == 0) {
+					showToast("还未选择任何成员！");
+					return;
+				}
+				//单次最多邀请20人
+				if (selectedList.size() > 30) {
+					showToast("单次最多邀请30个成员");
+					return;
+				}
+				
+				showProgressDialog("邀请成员加入群组");
 				
 				for (Object obj : selectedList) {
 					if (obj instanceof MemberInfo) {
@@ -437,27 +448,11 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 						uids.add(((ContactInfo) obj).getCon_uid());
 					}
 				}
-				if (uids.size() == 0) {
-					showToast("还未选择任何成员！");
-					removeProgressDialog();
-					return;
-				}
 				
-				EntboostUM.addToPersonGroup(groupid, uids, new AddToPersonGroupListener() {
+				//执行邀请成员任务
+				EntboostUM.addToPersonGroup(groupid, uids, new AddToGroupListener() {
 					@Override
-					public void onFailure(int code, final String errMsg) {
-						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
-							@Override
-							public void run() {
-								showToast(errMsg);
-								removeProgressDialog();
-								//MyApplication.getInstance().getSelectedUserList().clear();
-							}
-						});
-					}
-					
-					@Override
-					public void onSuccess() {
+					public void onSuccess(Long depCode, Long uid, String account) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {
@@ -467,6 +462,23 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 								MemberSelectActivity.clearSelectedCache();
 							}
 						});
+					}
+
+					@Override
+					public void onFailure(int code, final String errMsg, Long depCode, Long uid, String account) {
+						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+							@Override
+							public void run() {
+								//showToast(errMsg);
+								removeProgressDialog();
+								//MyApplication.getInstance().getSelectedUserList().clear();
+							}
+						});
+					}
+					
+					@Override
+					public void onFailure(int code, final String errMsg) {
+						//do nothing
 					}
 				});
 			}
@@ -483,6 +495,12 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 		if (selectType==1)
 			entAdapter.setSelectOne(true);
 		entAdapter.setSelectedMemberListener(this);
+		
+		//设置企业架构人数显示模式
+		AppAccountInfo appInfo = EntboostCache.getAppInfo();
+		if ((appInfo.getSystem_setting() & AppAccountInfo.SYSTEM_SETTING_VALUE_DISABLE_STATSUB_GROUP_MEMBER) 
+				!= AppAccountInfo.SYSTEM_SETTING_VALUE_DISABLE_STATSUB_GROUP_MEMBER)
+			entAdapter.setCalculateSubDepartment(true);
 		
 		//展开事件
 		entListener = new ExpandableListView.OnGroupExpandListener() {
@@ -787,27 +805,27 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 	 * 
 	 * @return
 	 */
-	private boolean checkSelfGroup(Object obj) {
-		if (obj instanceof ContactInfo) {
-			ContactInfo contactInfo = (ContactInfo) obj;
-			if (contactInfo.getCon_uid() == null) {
-				showToast("当前选中联系人不是系统用户，不能添加！");
-				return false;
-			} else {
-				if (EntboostCache.isExistMember(groupid, contactInfo.getCon_uid())) {
-					showToast("用户已是本群成员！");
-					return false;
-				}
-			}
-		} else if (obj instanceof MemberInfo) {
-			MemberInfo memberInfo = (MemberInfo) obj;
-			if (EntboostCache.isExistMember(groupid, memberInfo.getEmp_uid())) {
-				showToast("用户已是本群成员！");
-				return false;
-			}
-		}
-		return true;
-	}
+//	private boolean checkSelfGroup(Object obj) {
+//		if (obj instanceof ContactInfo) {
+//			ContactInfo contactInfo = (ContactInfo) obj;
+//			if (contactInfo.getCon_uid() == null) {
+//				showToast("当前选中联系人不是系统用户，不能添加！");
+//				return false;
+//			} else {
+//				if (EntboostCache.isExistMember(groupid, contactInfo.getCon_uid())) {
+//					showToast("用户已是本群成员！");
+//					return false;
+//				}
+//			}
+//		} else if (obj instanceof MemberInfo) {
+//			MemberInfo memberInfo = (MemberInfo) obj;
+//			if (EntboostCache.isExistMember(groupid, memberInfo.getEmp_uid())) {
+//				showToast("用户已是本群成员！");
+//				return false;
+//			}
+//		}
+//		return true;
+//	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -827,6 +845,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 		selectType = msgid>0?1:0;
 		
 		selected_area = (LinearLayout) findViewById(R.id.selected_area);
+		selected_count = (TextView)findViewById(R.id.selected_count);
 		text_listname = (TextView) findViewById(R.id.text_listname);
 		layout_contact = findViewById(R.id.layout_contact2);
 		layout_group = findViewById(R.id.layout_group2);
@@ -909,7 +928,9 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 
 	@Override
 	public void onSelectedMembersChange() {
-		selectedAdapter.setInput(MemberSelectActivity.getSelectedMembersAndContacts());
+		List<Object> list = MemberSelectActivity.getSelectedMembersAndContacts();
+		selected_count.setText(""+list.size());
+		selectedAdapter.setInput(list);
 		selectedAdapter.notifyDataSetChanged();
 	}
 

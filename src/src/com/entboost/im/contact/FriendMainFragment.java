@@ -244,6 +244,14 @@ public class FriendMainFragment extends EbFragment {
 	private void initEnt(final View view) {
 		entlistView = (ExpandableListView) view.findViewById(R.id.entlist);
 		entAdapter = new GroupAdapter<DepartmentInfo>(view.getContext(), entlistView);
+		
+		//设置企业架构人数显示模式
+		AppAccountInfo appInfo = EntboostCache.getAppInfo();
+		if ((appInfo.getSystem_setting() & AppAccountInfo.SYSTEM_SETTING_VALUE_DISABLE_STATSUB_GROUP_MEMBER) 
+				!= AppAccountInfo.SYSTEM_SETTING_VALUE_DISABLE_STATSUB_GROUP_MEMBER)
+			entAdapter.setCalculateSubDepartment(true);
+		
+		//展开事件监听
 		entListener = new ExpandableListView.OnGroupExpandListener() {
 			@Override
 			public void onGroupExpand(final int groupPosition) {
@@ -277,6 +285,7 @@ public class FriendMainFragment extends EbFragment {
 			}
 		};
 		
+		//点击成员事件监听
 		entChildtListener = new ExpandableListView.OnChildClickListener() {
 			@Override
 			public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {

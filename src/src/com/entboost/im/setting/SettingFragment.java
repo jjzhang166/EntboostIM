@@ -7,6 +7,7 @@ import net.yunim.utils.YIResourceUtils;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -14,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.entboost.Log4jLog;
 import com.entboost.global.AbConstant;
 import com.entboost.im.R;
 import com.entboost.im.base.EbFragment;
@@ -90,6 +92,8 @@ public class SettingFragment extends EbFragment {
 			public void onClick(View v) {
 				View view = mInflater.inflate(R.layout.dialog_exit, null);
 				activity.showDialog(AbConstant.DIALOGBOTTOM, view);
+				
+				//登出当前用户
 				view.findViewById(R.id.logout_layout).setOnClickListener(new OnClickListener() {
 					@Override
 					public void onClick(View v) {
@@ -104,6 +108,7 @@ public class SettingFragment extends EbFragment {
 					}
 				});
 				
+				//退出应用程序
 				view.findViewById(R.id.exit_layout).setOnClickListener(new OnClickListener() {
 					@Override
 					public void onClick(View v) {
@@ -115,6 +120,13 @@ public class SettingFragment extends EbFragment {
 						UIUtils.cancelNotificationMsg(activity);
 						//退出所有Activity
 						MyActivityManager.getInstance().clearAllActivity();
+						//完全退出进程
+						new Handler().postDelayed(new Runnable() {
+							@Override
+							public void run() {
+								System.exit(0);
+							}
+						}, 1000);
 					}
 				});
 			}

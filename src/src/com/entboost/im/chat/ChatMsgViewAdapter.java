@@ -255,6 +255,10 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 		viewHolder.chatContent.setOnLongClickListener(null);
 		viewHolder.chatLayout.setOnLongClickListener(null);
 		
+		viewHolder.chatAttach.setOnClickListener(null);
+		viewHolder.chatContent.setOnClickListener(null);
+		viewHolder.chatLayout.setOnClickListener(null);
+		
 		//设置各控件初始状态
 		viewHolder.file_progressBar.setVisibility(View.GONE);
 		viewHolder.file_progressBar.setProgress(0);
@@ -271,7 +275,6 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 		if (viewHolder.file_offline_btn != null) {
 			viewHolder.file_offline_btn.setVisibility(View.GONE);
 		}
-		viewHolder.chatAttach.setOnClickListener(null);
 		viewHolder.chatAttach.setFocusable(false);
 		
 		if (mChatMsgList.size() > 0 && position > 1) {

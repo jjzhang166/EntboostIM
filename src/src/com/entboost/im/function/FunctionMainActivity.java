@@ -58,13 +58,22 @@ public class FunctionMainActivity extends EbActivity {
 		
 		mWebView = (WebView) findViewById(R.id.funcWebView);
 		WebSettings s = mWebView.getSettings();
+		//支持JS
 		s.setJavaScriptEnabled(true);
+		//设置WebView可触摸放大缩小
+		s.setSupportZoom(true);
+		s.setBuiltInZoomControls(true);
+		s.setDisplayZoomControls(false);
+		//支持缓存
 		s.setDomStorageEnabled(true);
+		
+		//加载页面自适应手机屏幕 
+	    s.setUseWideViewPort(true);
+	    s.setLoadWithOverviewMode(true);
+		
 		mWebView.setBackgroundResource(R.color.mainPageBG);
 		mWebView.requestFocus();
 		mWebView.setScrollBarStyle(0);
-		//设置WebView可触摸放大缩小
-		mWebView.getSettings().setBuiltInZoomControls(true);
 		
 		//加载页面
 		mWebView.setWebViewClient(new WebViewClient() {
