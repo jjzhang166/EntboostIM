@@ -18,6 +18,7 @@ import android.app.PendingIntent;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
@@ -46,6 +47,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.entboost.handler.HandlerToolKit;
 import com.entboost.im.R;
 import com.entboost.ui.utils.AbViewUtil;
 
@@ -55,17 +57,22 @@ public class UIUtils {
 	
 	/** 屏幕宽度. */
 	public static int diaplayWidth = 320;
-
+	
 	/**
 	 * 描述：Toast提示文本.
 	 * 
-	 * @param text
-	 *            文本
+	 * @param text 文本
 	 */
-	public static void showToast(Context context, String text) {
-		Toast.makeText(context, "" + text, Toast.LENGTH_SHORT).show();
+	public static void showToast(final Context context, final String text) {
+		//主线程中执行
+		HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+			@Override
+			public void run() {
+				Toast.makeText(context, "" + text, Toast.LENGTH_SHORT).show();
+			}
+		});
 	}
-
+	
 	public static void showWindow(View parent, ListView view,
 			final OnItemClickListener listener) {
 		AbViewUtil.measureView(view);
@@ -126,17 +133,12 @@ public class UIUtils {
 	 * @return
 	 */
 	public static boolean isAppOnForeground(Context applicationContext) {
-		// Returns a list of application processes that are running on the
-		// device
-		ActivityManager activityManager = (ActivityManager) applicationContext
-				.getSystemService(Context.ACTIVITY_SERVICE);
+		ActivityManager activityManager = (ActivityManager) applicationContext.getSystemService(Context.ACTIVITY_SERVICE);
 		String packageName = applicationContext.getPackageName();
-		List<RunningAppProcessInfo> appProcesses = activityManager
-				.getRunningAppProcesses();
+		List<RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
 		if (appProcesses == null)
 			return false;
 		for (RunningAppProcessInfo appProcess : appProcesses) {
-			// The name of the process that this object is associated with.
 			if (appProcess.processName.equals(packageName)
 					&& appProcess.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
 				return true;
@@ -145,6 +147,25 @@ public class UIUtils {
 		return false;
 	}
 
+	/**
+	 * 程序是否在运行
+	 * 
+	 * @return
+	 */
+	public static boolean isAppRunning(Context applicationContext) {
+		ActivityManager activityManager = (ActivityManager) applicationContext.getSystemService(Context.ACTIVITY_SERVICE);
+		String packageName = applicationContext.getPackageName();
+		List<RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
+		if (appProcesses == null)
+			return false;
+		for (RunningAppProcessInfo appProcess : appProcesses) {
+			if (appProcess.processName.equals(packageName)) {
+				return true;
+			}
+		}
+		return false;
+	}	
+	
 	/**
 	 * 将表情资源添加到文本编辑框中
 	 * 
@@ -161,8 +182,7 @@ public class UIUtils {
 						EB_RESOURCE_TYPE.EB_RESOURCE_EMOTION.ordinal()));
 		drawable.setBounds(0, 0, 35, 35);// 设置表情图片的显示大小
 		ImageSpan dspan = new ImageSpan(drawable, ImageSpan.ALIGN_BOTTOM);
-		ss.setSpan(dspan, 0, newText.length(),
-				Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		ss.setSpan(dspan, 0, newText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 		mContentEdit.getText().insert(mContentEdit.getSelectionStart(), ss);
 	}
 
@@ -208,14 +228,49 @@ public class UIUtils {
 //		}
 //	}
 	
-	//发送通知栏消息
+	//消息通知设置
+	public static int NOTIFICATION_SETTING_MESSAGE_NEW = 1;		//接收新消息通知
+	public static int NOTIFICATION_SETTING_MESSAGE_DETAILS = 2;	//通知显示消息详情
+	public static int NOTIFICATION_SETTING_MESSAGE_SOUND = 4;		//声音
+	public static int NOTIFICATION_SETTING_MESSAGE_VIBRATE = 8;	//振动
+	
+	
+	public static String PENDINGINTENT_TYPE_ACTIVITY 	=	"activity";
+	public static String PENDINGINTENT_TYPE_SERVICE 	= 	"service";
+	public static String PENDINGINTENT_TYPE_BROADCASE 	= 	"broadcase";
+	
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+	/**
+	 * 发送通知栏消息
+	 * @param context
+	 * @param icon
+	 * @param title
+	 * @param content
+	 * @param number
+	 * @param notificationIntent
+	 * @param intentType
+	 */
 	public static void sendNotificationMsg(Context context, int icon, CharSequence title, 
-			CharSequence content, int number, Intent notificationIntent) {
-		// 定义NotificationManager
-		NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+			CharSequence content, int number, Intent notificationIntent, String intentType) {
 		
-		PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		//检查通知提醒的配置
+		SharedPreferences preferences = context.getSharedPreferences("notificationSetting", Context.MODE_PRIVATE);
+		boolean enableSound = preferences.getBoolean(String.valueOf(UIUtils.NOTIFICATION_SETTING_MESSAGE_SOUND), true);
+		boolean enableVibrate = preferences.getBoolean(String.valueOf(UIUtils.NOTIFICATION_SETTING_MESSAGE_VIBRATE), true);
+		
+		//声音和震动
+		int defaults = 0 | (enableSound?Notification.DEFAULT_SOUND:0) | (enableVibrate?Notification.DEFAULT_VIBRATE:0);
+		
+		// 定义NotificationManager
+		NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+		
+		PendingIntent pendingIntent = null;
+		if (intentType==PENDINGINTENT_TYPE_ACTIVITY)
+			pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		else if (intentType==PENDINGINTENT_TYPE_SERVICE)
+			pendingIntent = PendingIntent.getService(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		else if (intentType==PENDINGINTENT_TYPE_BROADCASE)
+			pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		
 		Notification.Builder builder = new Notification.Builder(context);
 		builder.setContentTitle(title);
@@ -226,7 +281,7 @@ public class UIUtils {
 		//builder.setAutoCancel(true);
 		builder.setWhen(System.currentTimeMillis());
 		builder.setContentIntent(pendingIntent);
-		builder.setDefaults(Notification.DEFAULT_SOUND);
+		builder.setDefaults(defaults);
 		
 		//Notification mNotification = new Notification(icon, "[" + title + "]" + content, System.currentTimeMillis());
 		//mNotification.setLatestEventInfo(context, title, content, PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT));

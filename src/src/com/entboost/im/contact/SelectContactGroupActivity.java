@@ -235,6 +235,17 @@ public class SelectContactGroupActivity extends EbActivity {
 							}
 						});
 					}
+					
+					@Override
+					public void onOauthForword() {
+						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+							@Override
+							public void run() {
+								removeProgressDialog();
+							}
+						});
+					}
+					
 					@Override
 					public void onEditContactSuccess() {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {

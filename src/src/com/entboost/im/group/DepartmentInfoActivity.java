@@ -154,6 +154,7 @@ public class DepartmentInfoActivity extends EbActivity {
 					@Override
 					public void run() {
 						Intent intent = new Intent(DepartmentInfoActivity.this, MemberSelectActivity.class);
+						intent.putExtra("selectType", MemberSelectActivity.SELECT_TYPE_MULTI);
 						intent.putExtra("groupid", depid);
 						
 						List<MemberInfo> memberInfos = EntboostCache.getGroupMemberInfos(depid);

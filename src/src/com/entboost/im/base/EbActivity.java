@@ -167,6 +167,12 @@ public class EbActivity extends AbActivity implements EntboostIMListenerInterfac
 	}
 
 	@Override
+	public void onUserMessageChanged(ChatRoomRichMsg msg) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
 	public void onCallConnected(Long arg0) {
 		// TODO Auto-generated method stub
 
@@ -300,6 +306,12 @@ public class EbActivity extends AbActivity implements EntboostIMListenerInterfac
 
 	@Override
 	public void onDeleteContactGroup(Long contactGroupId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onDynamicNewsChanged(Long otherSideId) {
 		// TODO Auto-generated method stub
 		
 	}

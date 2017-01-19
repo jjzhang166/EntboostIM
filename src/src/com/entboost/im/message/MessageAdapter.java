@@ -89,7 +89,10 @@ public class MessageAdapter extends BaseAdapter {
 		}
 		
 		holder.itemsTitle.setText(dyn.getTitle());
-		holder.itemsText.setText(UIUtils.getTipCharSequence(mContext.getResources(), dyn.getContent(), true));
+		if (dyn.getLastRetractMsgId()!=null && dyn.getLastRetractMsgId()>0 && dyn.getMsg_id()!=null && dyn.getLastRetractMsgId()-dyn.getMsg_id()==0)
+			holder.itemsText.setText("[撤回一条消息]");
+		else 
+			holder.itemsText.setText(UIUtils.getTipCharSequence(mContext.getResources(), dyn.getContent(), true));
 		holder.itemsTime.setText(AbDateUtil.formatDateStr2Desc(AbDateUtil
 				.getStringByFormat(dyn.getTime(), AbDateUtil.dateFormatYMDHMS), AbDateUtil.dateFormatYMDHMS));
 		if (dyn.getType() == DynamicNews.TYPE_GROUPCHAT) {

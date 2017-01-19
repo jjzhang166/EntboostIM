@@ -2,6 +2,7 @@ package com.entboost.im.contact;
 
 import net.yunim.service.EntboostCache;
 import net.yunim.service.EntboostUM;
+import net.yunim.service.constants.EB_CONTACT_TYPE;
 import net.yunim.service.entity.AppAccountInfo;
 import net.yunim.service.entity.ContactInfo;
 import net.yunim.service.listener.DelContactListener;
@@ -15,6 +16,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.entboost.handler.HandlerToolKit;
@@ -57,26 +59,45 @@ public class ContactInfoActivity extends EbActivity {
 	@OnClick(R.id.contact_proving_btn)
 	public void addFriend(View view) {
 		if (contactInfo != null) {
-			showProgressDialog("正在验证好友");
-			EntboostUM.addContact(contactInfo.getContact(), contactInfo.getName(), contactInfo.getDescription(), contactInfo.getUgid(), new EditContactListener() {
+			final EditText input = new EditText(this);
+			showDialog("好友验证留言", input, new android.content.DialogInterface.OnClickListener() {
 				@Override
-				public void onFailure(int code, final String errMsg) {
-					HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+				public void onClick(DialogInterface dialog, int which) {
+					String value = input.getText().toString();
+					
+					showProgressDialog("正在验证好友");
+					EntboostUM.addContact(null, /*contactInfo.getCon_id(),*/ contactInfo.getCon_uid(), contactInfo.getContact(), contactInfo.getName(), value, contactInfo.getUgid(), new EditContactListener() {
 						@Override
-						public void run() {
-							showToast(errMsg);
-							removeProgressDialog();
+						public void onFailure(int code, final String errMsg) {
+							HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+								@Override
+								public void run() {
+									showToast(errMsg);
+									removeProgressDialog();
+								}
+							});
 						}
-					});
-				}
-				
-				@Override
-				public void onEditContactSuccess() {
-					HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+						
 						@Override
-						public void run() {
-							removeProgressDialog();
-							finish();
+						public void onOauthForword() {
+							HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+								@Override
+								public void run() {
+									showToast("加为好友的邀请已经发出，请等待对方验证！");
+									removeProgressDialog();
+								}
+							});
+						}
+						
+						@Override
+						public void onEditContactSuccess() {
+							HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+								@Override
+								public void run() {
+									removeProgressDialog();
+									finish();
+								}
+							});
 						}
 					});
 				}
@@ -124,7 +145,7 @@ public class ContactInfoActivity extends EbActivity {
 			Button del_btn = (Button) findViewById(R.id.contact_del_btn);
 			if ((appInfo.getSystem_setting() & AppAccountInfo.SYSTEM_SETTING_VALUE_AUTH_CONTACT) == AppAccountInfo.SYSTEM_SETTING_VALUE_AUTH_CONTACT) {
 				del_btn.setText("删除好友");
-				if (contactInfo.getType() == 0) {
+				if (contactInfo.getType() == EB_CONTACT_TYPE.EB_CONTACT_TYPE_COMMON.getValue()) {
 					Button contact_proving_btn = (Button) findViewById(R.id.contact_proving_btn);
 					contact_proving_btn.setVisibility(View.VISIBLE);
 				}

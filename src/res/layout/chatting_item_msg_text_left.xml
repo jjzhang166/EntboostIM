@@ -23,6 +23,25 @@
             android:textSize="12sp" />
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dip"
+        android:gravity="center_horizontal"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/errMsg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/chat_tip"
+            android:gravity="center_vertical"
+            android:padding="5dip"
+            android:visibility="gone"
+            android:textColor="@color/red"
+            android:textSize="12sp" />
+    </LinearLayout>
+    
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -100,6 +119,61 @@
                     android:padding="5dp"
                     android:textColor="@color/black"
                     android:textSize="16sp" />
+                
+                <LinearLayout
+                    android:id="@+id/cardInfoLayout"
+	                android:layout_width="wrap_content"
+	                android:layout_height="wrap_content"
+	                android:orientation="vertical"
+	                android:visibility="gone" >
+                	
+                    <RelativeLayout
+				        android:layout_width="wrap_content"
+				        android:layout_height="wrap_content"
+				        android:layout_marginTop="5dp"
+				        android:layout_marginRight="5dip"
+				        android:layout_marginBottom="5dip"
+				        android:layout_marginLeft="5dp">
+				        
+			        	<ImageView
+			                android:id="@+id/cardInfoHead"
+			                android:layout_width="40dp"
+			                android:layout_height="40dp"
+			                android:layout_gravity="left"
+			                android:clickable="true"
+			                android:scaleType="fitXY"
+                			android:src="@drawable/default_user" />
+			        	<TextView
+		                    android:id="@+id/cardInfoName"
+		                    android:layout_width="wrap_content"
+		                    android:layout_height="40dp"
+		                    android:layout_toRightOf="@+id/cardInfoHead"
+		                    android:clickable="true"
+		                    android:padding="10dp"
+		                    android:textColor="@color/text_color_2"
+		                    android:textSize="15sp" />
+      				</RelativeLayout>
+      				
+                    <View
+                        android:id="@+id/cardInfoSeparator"
+	                    android:layout_width="150dp"
+	                    android:layout_height="1dp"
+	                    android:clickable="false"
+	                    android:background="@color/border_line"
+	                    />
+ 					
+		        	<TextView
+	                    android:id="@+id/cardInfoTitle"
+	                    android:layout_width="wrap_content"
+	                    android:layout_height="wrap_content"
+	                    android:layout_gravity="left"
+	                    android:gravity= "left"
+	                    android:padding="5dp"
+	                    android:textColor="@color/text_color_gray"
+	                    android:textSize="12sp"/>    
+                    
+                </LinearLayout>
+                                
             </LinearLayout>
 
             <ProgressBar

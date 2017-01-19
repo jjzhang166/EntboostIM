@@ -18,6 +18,7 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -66,11 +67,16 @@ public class FunctionMainActivity extends EbActivity {
 		s.setDisplayZoomControls(false);
 		//支持缓存
 		s.setDomStorageEnabled(true);
+		//允许js弹出窗口
+		s.setJavaScriptCanOpenWindowsAutomatically(true);
 		
 		//加载页面自适应手机屏幕 
 	    s.setUseWideViewPort(true);
 	    s.setLoadWithOverviewMode(true);
 		
+	    //辅助WebView处理js的对话框，网站图标，网站title，加载进度等 
+	    mWebView.setWebChromeClient(new WebChromeClient());
+	    
 		mWebView.setBackgroundResource(R.color.mainPageBG);
 		mWebView.requestFocus();
 		mWebView.setScrollBarStyle(0);

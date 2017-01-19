@@ -159,8 +159,9 @@ public class MemberInfoActivity extends EbActivity {
 			} else {
 				member_add_contact.setVisibility(View.VISIBLE);
 			}
+			
 			// 3-5、如果成员已经是好友，则隐藏添加好友的按钮
-			if (EntboostUM.isContactMember(memberInfo)) {
+			if (EntboostCache.getContactInfo(memberInfo.getEmp_uid())!=null) {
 				member_add_contact.setVisibility(View.GONE);
 				member_add_friend.setVisibility(View.GONE);
 			}
@@ -180,32 +181,54 @@ public class MemberInfoActivity extends EbActivity {
 		}
 	}
 
+	//邀请好友
+	private void addContact(String description) {
+		showProgressDialog("正在邀请好友！");
+		EntboostUM.addContact(memberInfo, description, new EditContactListener() {
+			@Override
+			public void onFailure(int code, final String errMsg) {
+				HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+					@Override
+					public void run() {
+						showToast(errMsg);
+						removeProgressDialog();
+					}
+				});
+			}
+
+			@Override
+			public void onEditContactSuccess() {
+				HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+					@Override
+					public void run() {
+						removeProgressDialog();
+						finish();
+					}
+				});
+			}
+
+			@Override
+			public void onOauthForword() {
+				HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+					@Override
+					public void run() {
+						showToast("加为好友的邀请已经发出，请等待对方验证！");
+						removeProgressDialog();
+					}
+				});
+			}
+		});
+	}
+	
 	@OnClick(R.id.member_add_friend)
 	public void addFriend(View view) {
 		if (memberInfo != null) {
-			showProgressDialog("正在加为好友！");
-			EntboostUM.addContact(memberInfo, memberInfo.getDescription(), new EditContactListener() {
-
+			final EditText input = new EditText(this);
+			showDialog("邀请好友", input, new OnClickListener() {
 				@Override
-				public void onFailure(int code, final String errMsg) {
-					HandlerToolKit.runOnMainThreadAsync(new Runnable() {
-						@Override
-						public void run() {
-							showToast(errMsg);
-							removeProgressDialog();
-						}
-					});
-				}
-
-				@Override
-				public void onEditContactSuccess() {
-					HandlerToolKit.runOnMainThreadAsync(new Runnable() {
-						@Override
-						public void run() {
-							removeProgressDialog();
-							finish();
-						}
-					});
+				public void onClick(DialogInterface dialog, int which) {
+					String value = input.getText().toString();
+					addContact(value);
 				}
 			});
 		}
@@ -214,38 +237,7 @@ public class MemberInfoActivity extends EbActivity {
 	@OnClick(R.id.member_add_contact)
 	public void addContact(View view) {
 		if (memberInfo != null) {
-			final EditText input = new EditText(this);
-			showDialog("邀请好友", input, new OnClickListener() {
-
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					String value = input.getText().toString();
-					showProgressDialog("正在加为好友！");
-					EntboostUM.addContact(memberInfo, value, new EditContactListener() {
-								@Override
-								public void onFailure(int code, final String errMsg) {
-									HandlerToolKit.runOnMainThreadAsync(new Runnable() {
-										@Override
-										public void run() {
-											showToast(errMsg);
-											removeProgressDialog();
-										}
-									});
-								}
-
-								@Override
-								public void onEditContactSuccess() {
-									HandlerToolKit.runOnMainThreadAsync(new Runnable() {
-										@Override
-										public void run() {
-											removeProgressDialog();
-											finish();
-										}
-									});
-								}
-							});
-				}
-			});
+			addContact("");
 		}
 	}
 

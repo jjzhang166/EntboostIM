@@ -3,6 +3,7 @@ package com.entboost.im.setting;
 import net.yunim.service.EntboostCache;
 import net.yunim.service.EntboostLC;
 import net.yunim.service.entity.AccountInfo;
+import net.yunim.service.entity.FuncInfo;
 import net.yunim.utils.YIResourceUtils;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -15,13 +16,12 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.entboost.Log4jLog;
 import com.entboost.global.AbConstant;
 import com.entboost.im.R;
 import com.entboost.im.base.EbFragment;
+import com.entboost.im.function.FunctionMainActivity;
 import com.entboost.im.global.AppUtils;
 import com.entboost.im.global.MyApplication;
-import com.entboost.im.global.UIUtils;
 import com.entboost.im.global.VersionUtils;
 import com.entboost.im.user.LoginActivity;
 import com.entboost.im.user.UserInfoActivity;
@@ -64,6 +64,7 @@ public class SettingFragment extends EbFragment {
 			}
 		});
 		
+		//检查版本
 		view.findViewById(R.id.version_layout).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(final View v) {
@@ -73,6 +74,34 @@ public class SettingFragment extends EbFragment {
 			}
 		});
 		
+		//通知提醒
+		view.findViewById(R.id.notify_layout).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(activity, NotificationSettingActivity.class);
+				startActivity(intent);
+			}
+		});
+		
+		//个人收藏
+		if (EntboostCache.isSupportMyCollectionFuncInfo()) {
+			View collectLayoutView = view.findViewById(R.id.collect_layout);
+			collectLayoutView.setVisibility(View.VISIBLE);
+			collectLayoutView.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					FuncInfo funcInfo = (FuncInfo) EntboostCache.getMyCollectionFuncInfo();
+					if (funcInfo!=null) {
+						Intent intent = new Intent(SettingFragment.this.getActivity(), FunctionMainActivity.class);
+						intent.putExtra("funcInfo", funcInfo);
+						startActivity(intent);
+					}
+				}
+			});
+		}
+		
+		/*
+		//私隐与安全
 		view.findViewById(R.id.s_layout).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -80,13 +109,15 @@ public class SettingFragment extends EbFragment {
 			}
 		});
 		
+		//聊天对话设置
 		view.findViewById(R.id.chat_layout).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				UIUtils.showToast(activity, "聊天对话正在建设中...");
 			}
-		});
+		});*/
 		
+		//退出登录
 		view.findViewById(R.id.logout).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -98,13 +129,15 @@ public class SettingFragment extends EbFragment {
 					@Override
 					public void onClick(View v) {
 						EntboostLC.logout();
+						MyApplication.getInstance().setLogin(false);
+						
 						activity.getBottomDialog().cancel();
 						activity.finish();
 						Intent intent = new Intent(activity, LoginActivity.class);
 						startActivity(intent);
 						
 						//清除通知栏消息
-						UIUtils.cancelNotificationMsg(activity);
+						//UIUtils.cancelNotificationMsg(activity);
 					}
 				});
 				
@@ -113,11 +146,12 @@ public class SettingFragment extends EbFragment {
 					@Override
 					public void onClick(View v) {
 						EntboostLC.exit();
+						
 						activity.getBottomDialog().cancel();
 						activity.finish();
-
+						
 						//清除通知栏消息
-						UIUtils.cancelNotificationMsg(activity);
+						//UIUtils.cancelNotificationMsg(activity);
 						//退出所有Activity
 						MyActivityManager.getInstance().clearAllActivity();
 						//完全退出进程

@@ -37,7 +37,7 @@
     <string name="title_activity_select_head_img">选择头像</string>
     <string name="title_activity_member_list">成员列表</string>
     <string name="title_activity_function_main">FunctionMainActivity</string>
-    <string name="title_activity_default_user_info">默认名片</string>
+    <string name="title_activity_default_user_info">个人名片</string>
     <string name="version_name">恩布互联</string>
     <string name="title_activity_broadcast_message_list">广播消息</string>
     <string name="title_activity_broadcast_detail">广播消息</string>
@@ -49,6 +49,7 @@
     <string name="title_activity_department_list">DepartmentListActivity</string>
     <string name="title_activity_file_list">文件目录</string>
     <string name="title_activity_app_ver">版本信息</string>
+    <string name="title_activity_notification_setting">通知提醒设置</string>
     <string name="title_activity_edit_group_name">编辑名称</string>
     <string name="title_activity_edit_group_tel_activity">修改电话</string>
     <string name="title_activity_edit_group_fax">修改传真</string>

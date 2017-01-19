@@ -6,15 +6,19 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
+
 import net.yunim.eb.constants.EBConstants;
 import net.yunim.service.EntboostCM;
 import net.yunim.service.EntboostCache;
 import net.yunim.service.entity.AccountInfo;
+import net.yunim.service.entity.CardInfo;
 import net.yunim.service.entity.ChatRoomRichMsg;
 import net.yunim.service.entity.FileCache;
 import net.yunim.service.entity.MemberInfo;
 import net.yunim.service.listener.SendFileListener;
 import net.yunim.utils.YIFileUtils;
+import net.yunim.utils.YIImageLoader;
 import net.yunim.utils.YIResourceUtils;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -94,13 +98,16 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 			Log4jLog.d(LONG_TAG, "main looper:" + (Looper.getMainLooper()==Looper.myLooper()) + " refreshFileProgressBar " + msg.getPercent() + ", status " + msg.getStatus() + ", msg:"+msg);
 			
 			ProgressBar progressBar = progressBarIngs.get(msg.getMsgid());
-			TextView description = progressBarIngDescriptions.get(msg.getMsgid());
-			if (progressBar != null && description != null) {
+			TextView descriptionView = progressBarIngDescriptions.get(msg.getMsgid());
+			if (progressBar != null && descriptionView != null) {
 				progressBar.setMax(100);
 				progressBar.setProgress(msg.getPercent().intValue());
-				description.setText("进度：" + decimalFormat.format(msg.getPercent()) + "%");
+				descriptionView.setText("进度：" + decimalFormat.format(msg.getPercent()) + "%");
 				//description.setVisibility(View.VISIBLE);
 			}
+//			else {
+//				Log4jLog.e(LONG_TAG, "no progressBar(" + progressBar + ") or no descriptionView(" + descriptionView +"), msgId=" + msg.getMsgid());
+//			}
 		}
 	}
 
@@ -161,9 +168,19 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		//是否最后一条记录
-		final boolean isLast = (position==mChatMsgList.size()-1);
+		boolean isLast = (position==mChatMsgList.size()-1);
+		//是否倒数第二条记录
+		boolean isreversedSecond = (position==mChatMsgList.size()-2);
+		
 		//最后一条记录弹出菜单位置偏移量
-		final int lastOffset = isLast?-160:0;
+		int lastOffset = isLast?-80:0;
+		//倒数第二条记录弹出菜单位置偏移量
+		int reversedSecondOffset = isreversedSecond?-30:0;
+		//最终偏移量
+		final int shownOffset = (lastOffset!=0?lastOffset:(reversedSecondOffset!=0?reversedSecondOffset:0));
+		
+		//是否有"个人收藏"功能
+		final boolean isSupportMyCollectionFuncInfo = EntboostCache.isSupportMyCollectionFuncInfo();
 		
 		final ChatRoomRichMsg mChatMsg = mChatMsgList.get(position);
 		final boolean isToMsg = (getItemViewType(position) == IMsgViewType.IMVT_TO_MSG);
@@ -176,7 +193,7 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 				convertView = mInflater.inflate(R.layout.chatting_item_msg_text_right, null);
 				viewHolder.mProgressBar = (ProgressBar) convertView.findViewById(R.id.sendingProgress);
 				viewHolder.errorImg = (ImageView) convertView.findViewById(R.id.errorImg);
-				viewHolder.errMsg = (TextView) convertView.findViewById(R.id.errMsg);
+				//viewHolder.errMsg = (TextView) convertView.findViewById(R.id.errMsg);
 				viewHolder.file_progressBar = (ProgressBar) convertView.findViewById(R.id.file_progressBar);
 				viewHolder.fileBtnLayout = (LinearLayout) convertView.findViewById(R.id.fileBtnLayout);
 				viewHolder.file_refuse_btn = (Button) convertView.findViewById(R.id.file_refuse_btn);
@@ -197,6 +214,12 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 			viewHolder.chatLayout = (LinearLayout) convertView.findViewById(R.id.chatLayout);
 			viewHolder.chatContent = (TextView) convertView.findViewById(R.id.chatContent);
 			viewHolder.userHead = (ImageView) convertView.findViewById(R.id.userHead);
+			viewHolder.errMsg = (TextView) convertView.findViewById(R.id.errMsg);
+			
+			viewHolder.cardInfoLayout = (LinearLayout) convertView.findViewById(R.id.cardInfoLayout);
+			viewHolder.cardInfoHead = (ImageView) convertView.findViewById(R.id.cardInfoHead);
+			viewHolder.cardInfoName =  (TextView) convertView.findViewById(R.id.cardInfoName);
+			viewHolder.cardInfoTitle = (TextView) convertView.findViewById(R.id.cardInfoTitle);
 			
 			//区分群聊和单聊，设置接收文件按钮标题
 			if (viewHolder.file_receive_btn!=null) {
@@ -245,6 +268,7 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 			viewHolder.chatAttach = (ImageView) convertView.findViewById(R.id.chatAttach);
 			viewHolder.voicetip = (ImageView) convertView.findViewById(R.id.voicetip);
 			viewHolder.isToMsg = isToMsg;
+			
 			convertView.setTag(viewHolder);
 		} else {
 			viewHolder = (ViewHolder) convertView.getTag();
@@ -254,10 +278,16 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 		viewHolder.chatAttach.setOnLongClickListener(null);
 		viewHolder.chatContent.setOnLongClickListener(null);
 		viewHolder.chatLayout.setOnLongClickListener(null);
+		viewHolder.cardInfoLayout.setOnLongClickListener(null);
+		viewHolder.cardInfoHead.setOnLongClickListener(null);
+		viewHolder.cardInfoName.setOnLongClickListener(null);
 		
 		viewHolder.chatAttach.setOnClickListener(null);
 		viewHolder.chatContent.setOnClickListener(null);
 		viewHolder.chatLayout.setOnClickListener(null);
+		viewHolder.cardInfoLayout.setOnClickListener(null);
+		viewHolder.cardInfoHead.setOnClickListener(null);
+		viewHolder.cardInfoName.setOnClickListener(null);
 		
 		//设置各控件初始状态
 		viewHolder.file_progressBar.setVisibility(View.GONE);
@@ -265,10 +295,16 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 		if (viewHolder.errorImg!=null)
 			viewHolder.errorImg.setVisibility(View.GONE);
 		viewHolder.fileBtnLayout.setVisibility(View.GONE);
+		
 		viewHolder.chatLayout.setVisibility(View.VISIBLE);
+		viewHolder.chatContent.setVisibility(View.VISIBLE);
+		
+		viewHolder.cardInfoLayout.setVisibility(View.GONE);
 		viewHolder.voicetip.setVisibility(View.GONE);
 		viewHolder.chatAttach.setVisibility(View.GONE);
 		viewHolder.chatDiscription.setVisibility(View.GONE);
+		viewHolder.cardInfoHead.setImageDrawable(null);
+		
 		if (viewHolder.file_path_btn != null) {
 			viewHolder.file_path_btn.setVisibility(View.GONE);
 		}
@@ -277,6 +313,7 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 		}
 		viewHolder.chatAttach.setFocusable(false);
 		
+		//显示消息时间
 		if (mChatMsgList.size() > 0 && position > 1) {
 			ChatRoomRichMsg lastChatMsg = mChatMsgList.get(position - 1);
 			if (lastChatMsg == null || AbDateUtil.getOffectMinutes(mChatMsg.getMsgTime(), lastChatMsg.getMsgTime()) >= 1) {
@@ -290,94 +327,243 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 					AbDateUtil.dateFormatYMDHMS));
 		}
 		
-		if (isToMsg) {
-			if(mChatMsg.getStatus()==EBConstants.SEND_STATUS_ERROR){
-				viewHolder.errMsg.setVisibility(View.VISIBLE);
-				viewHolder.errMsg.setText(mChatMsg.getErrMsg());
-			}else{
-				viewHolder.errMsg.setVisibility(View.GONE);
-			}
+		//消息警告相关
+		viewHolder.errMsg.setVisibility(View.GONE);
+		viewHolder.errMsg.setText(null);
+		
+		if(mChatMsg.getStatus()==EBConstants.SEND_STATUS_ERROR) {
+			viewHolder.errMsg.setVisibility(View.VISIBLE);
+			viewHolder.errMsg.setText(mChatMsg.getErrMsg());
+		} else if (mChatMsg.getStatus()==EBConstants.SEND_RETRACT || mChatMsg.getStatus()==EBConstants.RECEIVE_RETRACT) {
+			viewHolder.errMsg.setVisibility(View.VISIBLE);
+			viewHolder.errMsg.setText("消息已撤回");
 		}
 		
+		
 		if (mChatMsg.getType() == ChatRoomRichMsg.CHATROOMRICHMSG_TYPE_PIC) { //截图消息
-			viewHolder.chatAttach.setVisibility(View.VISIBLE);
-			viewHolder.chatLayout.setVisibility(View.GONE);
-			viewHolder.chatAttach.setImageBitmap(mChatMsg.getPicBitmap());
-			//处理点击事件
-			viewHolder.chatAttach.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-//							Intent intent = new Intent(Intent.ACTION_VIEW);
-//							intent.setDataAndType(Uri.fromFile(new File(
-//									mChatMsg.getFilePath())), "image/*");
-//							context.startActivity(intent);
-					Intent intent = new Intent(context, FullImageActivity.class);
-					intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-					intent.putExtra("imgFilePath", mChatMsg.getFilePath());
-					context.startActivity(intent);
-					((ChatActivity)context).overridePendingTransition(android.R.anim.fade_in,android.R.anim.fade_out); 
-				}
-			});
-			//处理长按事件
-			viewHolder.chatAttach.setOnLongClickListener(new View.OnLongClickListener() {
-				@Override
-				public boolean onLongClick(View v) {
-					popMenu.removeAllItem();
-					popMenu.addItem(popMenuItems.get(1)); //"转发"功能
-					popMenu.addItem(popMenuItems.get(2)); //"删除"功能
-					popMenu.setObj(mChatMsg);
-					popMenu.showAsDropDown(v, lastOffset);
-					return false;
-				}
-			});
+			if (mChatMsg.getStatus()==EBConstants.RECEIVE_RETRACT || mChatMsg.getStatus()==EBConstants.SEND_RETRACT) { //被撤回的消息
+				viewHolder.chatLayout.setVisibility(View.VISIBLE);
+				viewHolder.chatAttach.setVisibility(View.GONE);
+				viewHolder.chatContent.setText("[撤回一条消息]");
+				
+				//处理长按事件
+				viewHolder.chatContent.setOnLongClickListener(new View.OnLongClickListener() {
+					@Override
+					public boolean onLongClick(View v) {
+						popMenu.removeAllItem();
+						popMenu.addItem(popMenuItems.get(2)); //"删除"功能
+						popMenu.setObj(mChatMsg);
+						popMenu.showAsDropDown(v, shownOffset*1);
+						return false;
+					}
+				});
+			} else {
+				viewHolder.chatAttach.setVisibility(View.VISIBLE);
+				viewHolder.chatLayout.setVisibility(View.GONE);
+				viewHolder.chatAttach.setImageBitmap(YIImageLoader.getInstance().getBitmap(mChatMsg.getFilePath(), 300));
+				//处理点击事件
+				viewHolder.chatAttach.setOnClickListener(new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+	//							Intent intent = new Intent(Intent.ACTION_VIEW);
+	//							intent.setDataAndType(Uri.fromFile(new File(
+	//									mChatMsg.getFilePath())), "image/*");
+	//							context.startActivity(intent);
+						Intent intent = new Intent(context, FullImageActivity.class);
+						intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+						intent.putExtra("imgFilePath", mChatMsg.getFilePath());
+						context.startActivity(intent);
+						((ChatActivity)context).overridePendingTransition(android.R.anim.fade_in,android.R.anim.fade_out); 
+					}
+				});
+				//处理长按事件
+				viewHolder.chatAttach.setOnLongClickListener(new View.OnLongClickListener() {
+					@Override
+					public boolean onLongClick(View v) {
+						popMenu.removeAllItem();
+						popMenu.addItem(popMenuItems.get(1)); //"转发"功能
+						popMenu.addItem(popMenuItems.get(2)); //"删除"功能
+						if (isToMsg && mChatMsg.getStatus()!=EBConstants.SEND_RETRACT)
+							popMenu.addItem(popMenuItems.get(3)); //"撤回消息"功能
+						if (isSupportMyCollectionFuncInfo)
+							popMenu.addItem(popMenuItems.get(4)); //"收藏"功能
+						
+						popMenu.setObj(mChatMsg);
+						popMenu.showAsDropDown(v, shownOffset*4);
+						return false;
+					}
+				});
+			}
 		} else if (mChatMsg.getType() == ChatRoomRichMsg.CHATROOMRICHMSG_TYPE_RICH) { //富文本消息
-			viewHolder.chatLayout.setVisibility(View.VISIBLE);
-			viewHolder.chatAttach.setVisibility(View.GONE);
-			viewHolder.chatContent.setText(UIUtils.getTipCharSequence(context.getResources(), mChatMsg.getTipHtml(), false));
-			viewHolder.chatContent.setMovementMethod(LinkMovementMethod.getInstance());
-			//处理长按事件
-			viewHolder.chatContent.setOnLongClickListener(new View.OnLongClickListener() {
-				@Override
-				public boolean onLongClick(View v) {
-					popMenu.removeAllItem();
-					popMenu.addItems(popMenuItems);
-					popMenu.setObj(mChatMsg);
-					popMenu.showAsDropDown(v, lastOffset);
-					return false;
-				}
-			});
+			if (mChatMsg.getStatus()==EBConstants.RECEIVE_RETRACT || mChatMsg.getStatus()==EBConstants.SEND_RETRACT) { //被撤回的消息
+				viewHolder.chatLayout.setVisibility(View.VISIBLE);
+				viewHolder.chatAttach.setVisibility(View.GONE);
+				viewHolder.chatContent.setText("[撤回一条消息]");
+				
+				//处理长按事件
+				viewHolder.chatContent.setOnLongClickListener(new View.OnLongClickListener() {
+					@Override
+					public boolean onLongClick(View v) {
+						popMenu.removeAllItem();
+						popMenu.addItem(popMenuItems.get(2)); //"删除"功能
+						popMenu.setObj(mChatMsg);
+						popMenu.showAsDropDown(v, shownOffset*1);
+						return false;
+					}
+				});
+			} else {
+				viewHolder.chatLayout.setVisibility(View.VISIBLE);
+				viewHolder.chatAttach.setVisibility(View.GONE);
+				viewHolder.chatContent.setText(UIUtils.getTipCharSequence(context.getResources(), mChatMsg.getTipHtml(), false));
+				viewHolder.chatContent.setMovementMethod(LinkMovementMethod.getInstance());
+				//处理长按事件
+				viewHolder.chatContent.setOnLongClickListener(new View.OnLongClickListener() {
+					@Override
+					public boolean onLongClick(View v) {
+						popMenu.removeAllItem();
+						popMenu.addItem(popMenuItems.get(0)); //"复制"功能
+						popMenu.addItem(popMenuItems.get(1)); //"转发"功能
+						popMenu.addItem(popMenuItems.get(2)); //"删除"功能
+						if (isToMsg && mChatMsg.getStatus()!=EBConstants.SEND_RETRACT)
+							popMenu.addItem(popMenuItems.get(3)); //"撤回消息"功能
+						if (isSupportMyCollectionFuncInfo)
+							popMenu.addItem(popMenuItems.get(4)); //"收藏"功能
+						
+						popMenu.setObj(mChatMsg);
+						popMenu.showAsDropDown(v, shownOffset*5);
+						return false;
+					}
+				});
+			}
 		} else if (mChatMsg.getType() == ChatRoomRichMsg.CHATROOMRICHMSG_TYPE_VOICE) { //语音消息
-			viewHolder.voicetip.setVisibility(View.VISIBLE);
-			
-			//voicetip_gif
-			viewHolder.chatLayout.setVisibility(View.VISIBLE);
-			viewHolder.chatAttach.setVisibility(View.GONE);
-			viewHolder.chatContent.setText(ExtAudioRecorder.getVideoPlayTime(mChatMsg.getFilePath())+"s    ");
-			
-			//点击播放语音
-			OnClickListener listener = new View.OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					ExtAudioRecorder.play(mChatMsg.getFilePath());
+			if (mChatMsg.getStatus()==EBConstants.RECEIVE_RETRACT || mChatMsg.getStatus()==EBConstants.SEND_RETRACT) { //被撤回的消息
+				viewHolder.chatLayout.setVisibility(View.VISIBLE);
+				viewHolder.chatAttach.setVisibility(View.GONE);
+				viewHolder.chatContent.setText("[撤回一条消息]");
+				
+				//处理长按事件
+				viewHolder.chatContent.setOnLongClickListener(new View.OnLongClickListener() {
+					@Override
+					public boolean onLongClick(View v) {
+						popMenu.removeAllItem();
+						popMenu.addItem(popMenuItems.get(2)); //"删除"功能
+						popMenu.setObj(mChatMsg);
+						popMenu.showAsDropDown(v, shownOffset*1);
+						return false;
+					}
+				});
+			} else {
+				viewHolder.voicetip.setVisibility(View.VISIBLE);
+				
+				//voicetip_gif
+				viewHolder.chatLayout.setVisibility(View.VISIBLE);
+				viewHolder.chatAttach.setVisibility(View.GONE);
+				viewHolder.chatContent.setText(ExtAudioRecorder.getVideoPlayTime(mChatMsg.getFilePath())+"s    ");
+				
+				//点击播放语音
+				OnClickListener listener = new View.OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						ExtAudioRecorder.play(mChatMsg.getFilePath());
+					}
+				};
+				viewHolder.chatContent.setOnClickListener(listener);
+				viewHolder.chatLayout.setOnClickListener(listener);
+				
+				//处理长按事件
+				OnLongClickListener lcListener = new View.OnLongClickListener() {
+					@Override
+					public boolean onLongClick(View v) {
+						popMenu.removeAllItem();
+						popMenu.addItem(popMenuItems.get(2)); //"删除"功能
+						if (isToMsg && mChatMsg.getStatus()!=EBConstants.SEND_RETRACT)
+							popMenu.addItem(popMenuItems.get(3)); //"撤回消息"功能
+						if (isSupportMyCollectionFuncInfo)
+							popMenu.addItem(popMenuItems.get(4)); //"收藏"功能
+						
+						popMenu.setObj(mChatMsg);
+						popMenu.showAsDropDown(v, shownOffset*3);
+						return false;
+					}
+				};
+				viewHolder.chatLayout.setOnLongClickListener(lcListener);
+				viewHolder.chatContent.setOnLongClickListener(lcListener);
+			}
+		} else if (mChatMsg.getType() == ChatRoomRichMsg.CHATROOMRICHMSG_TYPE_CARD_INFO) { //电子名片
+			if (mChatMsg.getStatus()==EBConstants.RECEIVE_RETRACT || mChatMsg.getStatus()==EBConstants.SEND_RETRACT) { //被撤回的消息
+				viewHolder.chatLayout.setVisibility(View.VISIBLE);
+				viewHolder.chatAttach.setVisibility(View.GONE);
+				viewHolder.chatContent.setText("[撤回一条消息]");
+				
+				//处理长按事件
+				viewHolder.chatContent.setOnLongClickListener(new View.OnLongClickListener() {
+					@Override
+					public boolean onLongClick(View v) {
+						popMenu.removeAllItem();
+						popMenu.addItem(popMenuItems.get(2)); //"删除"功能
+						popMenu.setObj(mChatMsg);
+						popMenu.showAsDropDown(v, shownOffset*1);
+						return false;
+					}
+				});
+			} else {
+				viewHolder.chatLayout.setVisibility(View.VISIBLE);
+				viewHolder.cardInfoLayout.setVisibility(View.VISIBLE);
+				viewHolder.chatContent.setVisibility(View.GONE);
+				viewHolder.cardInfoTitle.setText("个人名片");
+				
+				final CardInfo card = new CardInfo(mChatMsg.getText());
+				//名片名称
+				viewHolder.cardInfoName.setText(StringUtils.isNotBlank(card.getAcn())?card.getAcn():card.getNa());
+				//名片头像
+				if (StringUtils.isNotBlank(card.getHid()) && !card.getHid().equals("0")) {
+					Bitmap img = YIResourceUtils.getHeadBitmap(Long.valueOf(card.getHid()));
+					if (img != null) {
+						viewHolder.cardInfoHead.setImageBitmap(img);
+					} else {
+						ImageLoader.getInstance().displayImage(card.getHeadUrl(), viewHolder.cardInfoHead, MyApplication.getInstance().getUserImgOptions());
+					}
+				} else {
+					viewHolder.cardInfoHead.setImageResource(R.drawable.default_user);
 				}
-			};
-			viewHolder.chatContent.setOnClickListener(listener);
-			viewHolder.chatLayout.setOnClickListener(listener);
-			
-			//处理长按事件
-			OnLongClickListener lcListener = new View.OnLongClickListener() {
-				@Override
-				public boolean onLongClick(View v) {
-					popMenu.removeAllItem();
-					popMenu.addItem(popMenuItems.get(2)); //"删除"功能
-					popMenu.setObj(mChatMsg);
-					popMenu.showAsDropDown(v, lastOffset);
-					return false;
+				
+				if (card.getUid()!=null && card.getUid()>0) {
+					//点击跳转到详细界面
+					OnClickListener clkListener = new View.OnClickListener() {
+						@Override
+						public void onClick(View v) {
+							Intent intent = new Intent(context, DefaultUserInfoActivity.class);
+							intent.putExtra("uid", card.getUid());
+							context.startActivity(intent);
+						}
+					};
+					viewHolder.cardInfoLayout.setOnClickListener(clkListener);
+					viewHolder.cardInfoHead.setOnClickListener(clkListener);
+					viewHolder.cardInfoName.setOnClickListener(clkListener);
 				}
-			};
-			viewHolder.chatLayout.setOnLongClickListener(lcListener);
-			viewHolder.chatContent.setOnLongClickListener(lcListener);
-			
+				
+				//处理长按事件
+				OnLongClickListener lcListener =new View.OnLongClickListener() {
+					@Override
+					public boolean onLongClick(View v) {
+						popMenu.removeAllItem();
+						popMenu.addItem(popMenuItems.get(1)); //"转发"功能
+						popMenu.addItem(popMenuItems.get(2)); //"删除"功能
+						if (isToMsg && mChatMsg.getStatus()!=EBConstants.SEND_RETRACT)
+							popMenu.addItem(popMenuItems.get(3)); //"撤回消息"功能
+						if (isSupportMyCollectionFuncInfo)
+							popMenu.addItem(popMenuItems.get(4)); //"收藏"功能
+						
+						popMenu.setObj(mChatMsg);
+						popMenu.showAsDropDown(v, shownOffset*4);
+						return false;
+					}
+				};
+				
+				viewHolder.cardInfoLayout.setOnLongClickListener(lcListener);
+				viewHolder.cardInfoHead.setOnLongClickListener(lcListener);
+				viewHolder.cardInfoName.setOnLongClickListener(lcListener);
+			}
 		} else if (mChatMsg.getType() == ChatRoomRichMsg.CHATROOMRICHMSG_TYPE_FILE) { //文件消息
 			if (!isToMsg) { //接收文件
 				if (mChatMsg.getStatus() == EBConstants.RECEIVEFILE_STATUS_DEFAULT || mChatMsg.getStatus() == EBConstants.RECEIVEFILE_STATUS_OFFLINE) {
@@ -517,6 +703,7 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 				} else if (mChatMsg.getStatus() == EBConstants.SENDFILE_STATUS_ING) {
 					viewHolder.file_progressBar.setVisibility(View.VISIBLE);
 					viewHolder.chatDiscription.setVisibility(View.VISIBLE);
+					viewHolder.chatDiscription.setText("正在发送中");
 					viewHolder.file_refuse_btn.setVisibility(View.VISIBLE);
 					viewHolder.file_offline_btn.setVisibility(View.GONE);
 					if (mChatMsg.getMsgid() != null) {
@@ -630,7 +817,7 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 						popMenu.removeAllItem();
 						popMenu.addItem(popMenuItems.get(2)); //"删除"功能
 						popMenu.setObj(mChatMsg);
-						popMenu.showAsDropDown(v, lastOffset);
+						popMenu.showAsDropDown(v, shownOffset*1);
 						return false;
 					}
 				};
@@ -670,11 +857,12 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 				});
 			}
 		} else {
-			// 显示会话对方的默认名片头像
 			if (mChatMsg.getChatType() == ChatRoomRichMsg.CHATTYPE_GROUP) {
 				viewHolder.sendName.setVisibility(View.VISIBLE);
 				viewHolder.sendName.setText(mChatMsg.getSendName());
 			}
+			
+			// 显示会话对方的头像
 			Bitmap img = YIResourceUtils.getHeadBitmap(mChatMsg.getHid());
 			if (img != null) {
 				viewHolder.userHead.setImageBitmap(img);
@@ -706,6 +894,13 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 		public Button file_cancel_btn;
 		public TextView chatDiscription;
 		public Button file_path_btn;
+		
+		//电子名片相关
+		public LinearLayout cardInfoLayout;
+		public TextView cardInfoName;
+		public TextView cardInfoTitle;
+		public ImageView cardInfoHead;
+		
 	}
 
 }

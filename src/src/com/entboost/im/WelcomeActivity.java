@@ -1,22 +1,26 @@
 package com.entboost.im;
 
+import net.yunim.service.EntboostCache;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Parcelable;
 
 import com.entboost.Log4jLog;
 import com.entboost.im.global.IMStepExecutor;
 import com.entboost.im.global.MyApplication;
 import com.entboost.im.global.OtherUtils;
+import com.entboost.im.service.MainService;
+import com.entboost.im.user.LoginActivity;
 import com.entboost.ui.base.activity.MyActivityManager;
 
 public class WelcomeActivity extends Activity {
 
 	/** The tag. */
-	//private static String TAG = WelcomeActivity.class.getSimpleName();
+	private static String TAG = WelcomeActivity.class.getSimpleName();
 	private static String LONG_TAG = WelcomeActivity.class.getName();
 
 	@Override
@@ -60,9 +64,11 @@ public class WelcomeActivity extends Activity {
 		Log4jLog.i(LONG_TAG, "onDestroy");
 		
     	// Activity退出时出栈
-        Log4jLog.d(LONG_TAG, this.getClass().getName()+", activity pop");
+        Log4jLog.i(LONG_TAG, this.getClass().getName()+", activity pop");
         MyActivityManager.getInstance().popOneActivity(this);
 		
+        MyApplication application = (MyApplication)getApplication();
+//        application.setWelcomeActivity(null);
 		IMStepExecutor.getInstance().exitWelcome();
 		
 		super.onDestroy();
@@ -71,29 +77,32 @@ public class WelcomeActivity extends Activity {
 	@Override
 	protected void onNewIntent(Intent intent) {
 		Log4jLog.i(LONG_TAG, "onNewIntent");
+		setIntent(intent);
+		
+		MyApplication application = (MyApplication)getApplication();
+		application.setInInterface(true);
 		
 		super.onNewIntent(intent);
 	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		Log4jLog.i(LONG_TAG, "onCreate");
 		super.onCreate(savedInstanceState);
 		
-		Log4jLog.i(LONG_TAG, "onCreate");
+		final MyApplication application = (MyApplication)getApplication();
+		application.setInInterface(true);
 		
-		MyApplication application = (MyApplication)getApplication();
-		application.setWelcomeActivity(this);
-		
-		boolean isWork = OtherUtils.checkServiceWork(0, false, "WelcomeActivity");
-		if (!isWork) {
-			application.initEbConfig("WelcomeActivity");
-		}
-		
-		//加入管理栈
-		Log4jLog.d(LONG_TAG, this.getClass().getName()+", activity push (in onCreate())");
-		MyActivityManager.getInstance().pushOneActivity(this);
+	    if ((getIntent().getFlags() & Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) != 0) {
+	        finish();
+	        return;  
+	    }
 		
 		setContentView(R.layout.activity_welcome);
+		
+		//加入管理栈
+		Log4jLog.i(LONG_TAG, this.getClass().getName()+", activity push (in onCreate())");
+		MyActivityManager.getInstance().pushOneActivity(this);
 		
 		// 首次开启程序，添加桌面快捷图标
 		SharedPreferences preferences = getSharedPreferences("first", Context.MODE_PRIVATE);
@@ -105,7 +114,65 @@ public class WelcomeActivity extends Activity {
 		editor.putBoolean("isfrist", false);
 		editor.commit();
 		
-		IMStepExecutor.getInstance().executeTryLogon(this);
+//		application.setWelcomeActivity(this);
+		
+//		boolean isWork = OtherUtils.checkServiceWork(OtherUtils.EB_CLIENT_SERVICE_NAME, 0, false, "WelcomeActivity");
+//		if (!isWork) {
+//			application.initEbConfig("WelcomeActivity");
+//		}
+		
+		//启动服务
+		boolean isWork = OtherUtils.checkServiceWork(OtherUtils.MAIN_SERVICE_NAME, 0, false, TAG);
+		if (!isWork) {
+			Intent nIntent = new Intent(this, MainService.class);
+			startService(nIntent);
+		} else if (!application.isLogin() || !EntboostCache.getDefaultLogon()) {
+			//延迟3秒钟后执行
+			new Handler().postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					//关闭欢迎页
+					WelcomeActivity.this.finish();
+					
+					Intent intent = null;
+					if (application.isLogin()) {
+						//跳转到主界面
+						intent = new Intent(WelcomeActivity.this, MainActivity.class);
+						intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+						
+						Bundle bundle = intent.getBundleExtra(MainActivity.EXTRA_BUNDLE);
+						if(bundle != null)
+							intent.putExtra(MainActivity.EXTRA_BUNDLE, bundle);
+					} else {
+						//跳转到登录界面
+						intent = new Intent(WelcomeActivity.this, LoginActivity.class);
+						intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+					}
+					
+					startActivity(intent);
+				}
+			}, 3000);
+		} else if (application.isLogin()){
+			//延迟1秒钟后执行
+			new Handler().postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					//关闭欢迎页
+					WelcomeActivity.this.finish();
+					//跳转到主界面
+					Intent intent = new Intent(WelcomeActivity.this, MainActivity.class);
+					intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+					
+					Bundle bundle = intent.getBundleExtra(MainActivity.EXTRA_BUNDLE);
+					if(bundle != null)
+						intent.putExtra(MainActivity.EXTRA_BUNDLE, bundle);
+					
+					startActivity(intent);
+				}
+			}, 1000);
+		} else {
+			Log4jLog.e(LONG_TAG, "nothing to do");
+		}
 	}
 	
 	/**

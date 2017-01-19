@@ -154,20 +154,39 @@
 
             <Button
                 android:id="@+id/picBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/uitb_140" 
-                android:layout_marginRight="15dp">
+                android:layout_width="40dip"
+                android:layout_height="40dip"                
+                android:background="@drawable/uitb_140"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="20dp">
             </Button>
-
+            
+            
+			<!-- 
+            <Button
+                android:id="@+id/cameraBtn"
+                android:layout_width="40dip"
+                android:layout_height="40dip"
+                android:background="@drawable/uitb_141" 
+                android:layout_marginRight="20dp">
+            </Button> -->
+            
             <Button
                 android:id="@+id/fileBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/uitb_143" >
+                android:layout_width="40dip"
+                android:layout_height="40dip"
+                android:background="@drawable/uitb_143"
+                android:layout_marginRight="20dp" >
+            </Button>
+            
+            <Button
+                android:id="@+id/cardInfoBtn"
+                android:layout_width="40dip"
+                android:layout_height="40dip"
+                android:background="@drawable/uitb_144" >
             </Button>
         </LinearLayout>
-
+		
         <LinearLayout
             android:id="@+id/expressionAppPanel"
             android:layout_width="fill_parent"
@@ -196,7 +215,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:src="@drawable/voice"
+        android:src="@drawable/voice2"
         android:visibility="gone" />
 
 </RelativeLayout>

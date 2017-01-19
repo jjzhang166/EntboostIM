@@ -57,7 +57,7 @@
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="10dp"
                 android:scaleType="fitXY"
-                android:src="@drawable/setting4" />
+                android:src="@drawable/setting5" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -70,14 +70,74 @@
                 android:textColor="@color/text_color_2"
                 android:textSize="16sp" />
         </RelativeLayout>
+ 
+        <RelativeLayout
+            android:id="@+id/notify_layout"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:background="@drawable/bottom_line1"
+            android:gravity="center_vertical"
+            android:visibility="visible" >
+
+            <ImageView
+                android:id="@+id/notify_img"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="10dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/setting4" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="17dp"
+                android:layout_toRightOf="@+id/notify_img"
+                android:singleLine="true"
+                android:text="通知提醒"
+                android:textColor="@color/text_color_2"
+                android:textSize="16sp" />
+        </RelativeLayout>        
+ 
+        <RelativeLayout
+            android:id="@+id/collect_layout"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:background="@drawable/bottom_line1"
+            android:gravity="center_vertical"
+            android:visibility="gone" >
+
+            <ImageView
+                android:id="@+id/collect_img"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="10dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/setting6" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="17dp"
+                android:layout_toRightOf="@+id/collect_img"
+                android:singleLine="true"
+                android:text="个人收藏"
+                android:textColor="@color/text_color_2"
+                android:textSize="16sp" />
+        </RelativeLayout>        
         
         <RelativeLayout
             android:id="@+id/s_layout"
             android:layout_width="match_parent"
             android:layout_height="45dp"
             android:background="@drawable/bottom_line1"
-            android:gravity="center_vertical" 
-            android:visibility="invisible">
+            android:gravity="center_vertical"
+            android:visibility="gone" >
 
             <ImageView
                 android:id="@+id/s_img"
@@ -106,8 +166,8 @@
             android:layout_width="match_parent"
             android:layout_height="45dp"
             android:background="@drawable/bottom_line1"
-            android:gravity="center_vertical" 
-            android:visibility="invisible">
+            android:gravity="center_vertical"
+            android:visibility="gone" >
 
             <ImageView
                 android:id="@+id/chat_img"

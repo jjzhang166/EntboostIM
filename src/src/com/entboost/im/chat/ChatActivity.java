@@ -5,17 +5,21 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 
 import net.yunim.service.EntboostCM;
 import net.yunim.service.EntboostCache;
 import net.yunim.service.cache.EbCache;
 import net.yunim.service.cache.FileCacheUtils;
+import net.yunim.service.constants.EB_STATE_CODE;
 import net.yunim.service.entity.AppAccountInfo;
+import net.yunim.service.entity.ChatInfo;
 import net.yunim.service.entity.ChatRoomRichMsg;
 import net.yunim.service.entity.FileCache;
 import net.yunim.service.entity.FuncInfo;
 import net.yunim.service.entity.Resource;
 import net.yunim.service.listener.CallUserListener;
+import net.yunim.service.listener.MackListener;
 import net.yunim.service.listener.SendFileListener;
 import net.yunim.utils.YINetworkUtils;
 
@@ -73,12 +77,30 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 	/** The tag. */
 	private static String LONG_TAG = ChatActivity.class.getName();
 	
+	/**
+	 * 标题
+	 */
 	public static final String INTENT_TITLE = "intent_title";
+	/**
+	 * 用户编号或群组编号
+	 */
 	public static final String INTENT_UID = "intent_uid";
+	/**
+	 * 聊天类型：一对一聊天或群聊
+	 */
 	public static final String INTENT_CHATTYPE = "intent_chattype";
+	/**
+	 * 消息编号(用于转发指定的某条消息)
+	 */
 	public static final String INTENT_TO_MSG_ID = "intent_to_msgid";
 
+	/**
+	 * 一对一聊天
+	 */
 	public static final int CHATTYPE_PERSON = 0;
+	/**
+	 * 群组聊天
+	 */
 	public static final int CHATTYPE_GROUP = 1;
 
 	private int chattype = CHATTYPE_PERSON;
@@ -89,13 +111,15 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 	private LinearLayout emotionsAppPanel;
 	private GridView expressionGriView;
 	private EmotionsImageAdapter emotionsImageAdapter;
-	private Button picBtn;
 	private Button sendBtn;
 	private ImageView voiceImg;
 	private String title;
+	
 	private LinearLayout morePanel;
 	private ImageButton moreBtn;
+	private Button picBtn;
 	private Button fileBtn;
+	private Button cardInfoBtn;
 	
 	//键盘弹出/隐藏事件监听器
 	private KeyboardChangeListener mKeyboardChangeListener;
@@ -160,6 +184,11 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 	public void onSendStatusChanged(ChatRoomRichMsg msg) {
 		refreshPage(true);
 	}
+	
+	@Override
+	public void onUserMessageChanged(ChatRoomRichMsg msg) {
+		refreshPage(false);
+	}
 
 	//处理服务异常和未登陆状态
 	private void handleNotWork() {
@@ -179,7 +208,7 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 	protected void onResume() {
 		super.onResume();
 		
-		boolean isWork = OtherUtils.checkServiceWork(0, false, "ChatActivity");
+		boolean isWork = OtherUtils.checkServiceWork(OtherUtils.MAIN_SERVICE_NAME, 0, false, "ChatActivity");
 		//service未启动，退出当前聊天页面
 		if (!isWork) {
 			Log4jLog.e(LONG_TAG, "the servie is not running, exit ChatActivity");
@@ -189,12 +218,26 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 			handleNotWork();
 		}
 	}
-
+	
+	@Override
+	protected void onNewIntent(Intent intent) {
+		Log4jLog.i(LONG_TAG, "onNewIntent");
+		super.onNewIntent(intent);
+		
+		setIntent(intent);
+		renderView();
+	}
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setAbContentView(R.layout.activity_chat);
 		
+		 renderView();
+	}
+	
+	//渲染界面
+	private void renderView() {
 		//键盘弹出/隐藏事件监听器
         mKeyboardChangeListener = new KeyboardChangeListener(this);
         mKeyboardChangeListener.setKeyBoardListener(this);
@@ -268,7 +311,7 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 								}
 
 								@Override
-								public void onChatEntered() {
+								public void onChatEntered(ChatInfo chat) {
 								}
 							});
 						}
@@ -288,19 +331,21 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 			}));
 			
 			// 增加右上角查看共享文件列表按钮
-			final FuncInfo funcInfo = EntboostCache.getGroupFilesFuncInfo();
-			if (funcInfo!=null) {
+			if (EntboostCache.isSupportGroupFilesFuncInfo()) {
 				this.getTitleBar().addRightImageButton(R.drawable.uitb_61, null, new PopMenuItem(new PopMenuItemOnClickListener() {
 					@Override
 					public void onItemClick() {
-						Intent intent = new Intent(ChatActivity.this, FunctionMainActivity.class);
-						intent.putExtra("funcInfo", funcInfo);
-						
-						LinkedHashMap<String, Object> eParams = new LinkedHashMap<String, Object>();
-						eParams.put("gid", uid);
-						intent.putExtra("eParams", eParams);
-						
-						startActivityForResult(intent, 5);
+						FuncInfo funcInfo = EntboostCache.getGroupFilesFuncInfo();
+						if (funcInfo!=null) {
+							Intent intent = new Intent(ChatActivity.this, FunctionMainActivity.class);
+							intent.putExtra("funcInfo", funcInfo);
+							
+							LinkedHashMap<String, Object> eParams = new LinkedHashMap<String, Object>();
+							eParams.put("gid", uid);
+							intent.putExtra("eParams", eParams);
+							
+							startActivityForResult(intent, REQUEST_CODE_GROUPFILE);
+						}
 					}
 				}));
 			}
@@ -616,6 +661,7 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 				ChatRoomRichMsg msg = (ChatRoomRichMsg) popMenu.getObj();
 				Intent intent = new Intent(ChatActivity.this, MemberSelectActivity.class);
 				//intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+				intent.putExtra("selectType", MemberSelectActivity.SELECT_TYPE_SINGLE);
 				intent.putExtra("msgid", msg.getMsgid());
 				
 				//把当前用户在选择界面除外
@@ -624,7 +670,7 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 				excludeUids.add(ChatActivity.this.uid); //当前一对一聊天界面的对方用户编号
 				intent.putExtra("excludeUids", (Serializable)excludeUids);
 				
-				startActivityForResult(intent, 1);
+				startActivityForResult(intent, REQUEST_CODE_FORWORD_MESSAGE);
 			}
 		});
 		popMenuItems.add(item2);
@@ -642,7 +688,73 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 			}
 		});
 		popMenuItems.add(item3);
+		mChatMsgViewAdapter.setPopMenuItems(popMenuItems);
+		
+		//"撤回消息"菜单项
+		PopMenuItem item4 = new PopMenuItem("撤回消息", 0, R.layout.item_menu, new PopMenuItemOnClickListener() {
+			@Override
+			public void onItemClick() {
+				popMenu.dismiss();
+				
+				ChatRoomRichMsg msg = (ChatRoomRichMsg) popMenu.getObj();
+				EntboostCM.retractMsg(msg, new MackListener() {
+					@Override
+					public void onFailure(int code, String errMsg) {
+						Log4jLog.e(LONG_TAG, errMsg + " code(" + code + ")");
+						if (code==EB_STATE_CODE.EB_STATE_TIMEOUT_ERROR.getValue() || code==EB_STATE_CODE.EB_STATE_MSG_NOT_EXIST.getValue()) {
+							UIUtils.showToast(ChatActivity.this, "超过2分钟的消息，不能撤回！");
+						}
+					}
+					@Override
+					public void onSuccess() {
+						//主线程执行
+						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+							@Override
+							public void run() {
+								refreshPage(false);
+							}
+						});
+					}
+				});
+			}
+		});
+		popMenuItems.add(item4);
 		mChatMsgViewAdapter.setPopMenuItems(popMenuItems);		
+		
+		//"收藏"菜单项
+		PopMenuItem item5 = new PopMenuItem("收藏", 0, R.layout.item_menu, new PopMenuItemOnClickListener() {
+			@Override
+			public void onItemClick() {
+				popMenu.dismiss();
+				
+				ChatRoomRichMsg msg = (ChatRoomRichMsg) popMenu.getObj();
+				EntboostCM.collectMessage(msg, true, new MackListener() {
+					@Override
+					public void onFailure(int code, String errMsg) {
+						Log4jLog.e(LONG_TAG, errMsg + " code(" + code + ")");
+						//主线程执行
+						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+							@Override
+							public void run() {
+								UIUtils.showToast(ChatActivity.this, "收藏消息失败");
+							}
+						});
+					}
+					@Override
+					public void onSuccess() {
+						//主线程执行
+						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+							@Override
+							public void run() {
+								UIUtils.showToast(ChatActivity.this, "收藏消息成功");
+							}
+						});
+					}
+				});
+			}
+		});
+		popMenuItems.add(item5);
+		mChatMsgViewAdapter.setPopMenuItems(popMenuItems);
 		
 		//表情输入选择区域
 		expressionGriView = (GridView) this.findViewById(R.id.expressionGridView);
@@ -657,19 +769,6 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 			}
 		});
 		emotionsAppPanel = (LinearLayout) this.findViewById(R.id.expressionAppPanel);
-		
-		//"选取待发送图片"按钮
-		picBtn = (Button) this.findViewById(R.id.picBtn);
-		picBtn.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View arg0) {
-				if (!YINetworkUtils.isNetworkConnected(ChatActivity.this)) {
-					pageInfo.showError(ChatActivity.this.getString(R.string.msg_error_localNoNetwork));
-					return;
-				}
-				getPicFromContent();
-			}
-		});
 		
 		//“切换表情输入框”按钮
 		ImageButton emotionBtn = (ImageButton) this.findViewById(R.id.emotionBtn);
@@ -708,14 +807,26 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 			}
 		});
 		
-		//“选取待发送文件”按钮
+		//"选取待发送图片"按钮
+		picBtn = (Button) this.findViewById(R.id.picBtn);
+		picBtn.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				if (!YINetworkUtils.isNetworkConnected(ChatActivity.this)) {
+					pageInfo.showError(ChatActivity.this.getString(R.string.msg_error_localNoNetwork));
+					return;
+				}
+				getPicFromContent();
+			}
+		});
+		
+		//"选取待发送文件"按钮
 		fileBtn = (Button) this.findViewById(R.id.fileBtn);
-		final FuncInfo funcInfo = EntboostCache.getGroupFilesFuncInfo();
-		if (chattype == CHATTYPE_PERSON || (chattype == CHATTYPE_GROUP && funcInfo!=null)) {
+		if (chattype == CHATTYPE_PERSON || (chattype == CHATTYPE_GROUP && EntboostCache.isSupportGroupFilesFuncInfo())) {
 			fileBtn.setVisibility(View.VISIBLE);
 			fileBtn.setOnClickListener(new OnClickListener() {
 				@Override
-				public void onClick(View arg0) {
+				public void onClick(View view) {
 					if (!YINetworkUtils.isNetworkConnected(ChatActivity.this)) {
 						pageInfo.showError(ChatActivity.this.getString(R.string.msg_error_localNoNetwork));
 						return;
@@ -726,6 +837,31 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 		} else {
 			fileBtn.setVisibility(View.GONE);
 		}
+		
+		//"发送名片"按钮
+		cardInfoBtn = (Button) this.findViewById(R.id.cardInfoBtn);
+		cardInfoBtn.setVisibility(View.VISIBLE);
+		cardInfoBtn.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				if (!YINetworkUtils.isNetworkConnected(ChatActivity.this)) {
+					pageInfo.showError(ChatActivity.this.getString(R.string.msg_error_localNoNetwork));
+					return;
+				}
+				
+				//切换至选择成员的界面
+				Intent intent = new Intent(ChatActivity.this, MemberSelectActivity.class);
+				//intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+				intent.putExtra("selectType", MemberSelectActivity.SELECT_TYPE_SINGLE);
+				
+				//把当前用户在选择界面除外
+				List<Long> excludeUids = new ArrayList<Long>();
+				excludeUids.add(ChatActivity.this.uid); //当前聊天对方的用户编号
+				intent.putExtra("excludeUids", (Serializable)excludeUids);
+				
+				startActivityForResult(intent, REQUEST_CODE_CARDINFO);
+			}
+		});
 		
 		//处理默认自动发送的消息(通常用于转发消息)
 		final Long msgId = getIntent().getLongExtra(INTENT_TO_MSG_ID, 0);
@@ -768,7 +904,7 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 		Log4jLog.i(LONG_TAG, "Uri="+Uri.fromFile(file).toString());
 		
 		intent.setDataAndType(Uri.fromFile(file), "*/*");
-		startActivityForResult(intent, 3);
+		startActivityForResult(intent, REQUEST_CODE_FILE);
 	}
 
 	private void getPicFromContent() {
@@ -782,7 +918,7 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 			intent.setType("image/*");
 			intent.setAction(Intent.ACTION_GET_CONTENT);
 		}
-		startActivityForResult(intent, 2);
+		startActivityForResult(intent, REQUEST_CODE_PICTURE);
 	}
 
 //	private String getPathFromUri(Uri fileUrl) {
@@ -873,19 +1009,32 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 //		
 //		return fileName;
 //	}
-
+	
+	//定义页面请求代码
+	private final static int REQUEST_CODE_FORWORD_MESSAGE = 1; //选取发送目标对象，转发消息
+	private final static int REQUEST_CODE_PICTURE = 2; //选择图片
+	private final static int REQUEST_CODE_FILE = 3; //选择文件
+	private final static int REQUEST_CODE_GROUPFILE = 5; //查看群共享文件
+	private final static int REQUEST_CODE_CARDINFO = 6; //选取发送目标对象，发送名片
+	
+	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (resultCode != RESULT_OK) {
 			return;
 		}
 		
+		//目标Uid
+		Long targetUid;
+		//目标名称
+		String targetName;
+		
 		switch(requestCode) {
-		case 1: //选取转发消息的目标对象，并执行转发
+		case REQUEST_CODE_FORWORD_MESSAGE: //选取目标对象，并执行转发消息
 			Long msgId = data.getLongExtra("msgid", 0);
-			Long targetUid = data.getLongExtra("target_uid", 0);
-			String targetName = data.getStringExtra("target_name");
-			Log4jLog.e(LONG_TAG, "转发消息，msg_id="+msgId + ", target_uid=" + targetUid + ", target_name=" + targetName);
+			targetUid = data.getLongExtra("target_uid", 0);
+			targetName = data.getStringExtra("target_name");
+			Log4jLog.i(LONG_TAG, "转发消息，msg_id="+msgId + ", target_uid=" + targetUid + ", target_name=" + targetName);
 			
 			if (targetUid>0 && msgId>0) {
 				//结束当前聊天窗口
@@ -900,21 +1049,22 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 				startActivity(intent);
 			}
 			break;
-		case 2: //获取手机中的图片
-		case 3: // 获取手机中的文件
+		case REQUEST_CODE_PICTURE: //获取手机中的图片
+		case REQUEST_CODE_FILE: // 获取手机中的文件
 			//String filePath = getPathFromUri(data.getData());
 			String filePath = OtherUtils.getFileAbsolutePath(this, data.getData());
 			Log4jLog.i(LONG_TAG, "onActivityResult filePath:" + filePath);
 			
 			if (requestCode == 2) {// 获取手机中的图片
-				if (filePath.endsWith("jpg") || filePath.endsWith("png")) {
+				String lowerCaseFilePath = filePath.toLowerCase(Locale.US);
+				if (lowerCaseFilePath.endsWith("jpg") || lowerCaseFilePath.endsWith("png")) {
 					sendPic(filePath);
 				}
 			} else if (requestCode == 3) {// 获取手机中的文件
 				sendFile(filePath);
 			}
 			break;
-		case 5: //群共享文件
+		case REQUEST_CODE_GROUPFILE: //群共享文件
 			long resId = data.getLongExtra("resId", 0);
 			int dlType = data.getIntExtra("dlType", -1);
 			
@@ -922,6 +1072,18 @@ public class ChatActivity extends EbActivity implements KeyBoardListener{
 				EntboostCM.receiveGroupFile(resId, this.uid);
 			}
 			
+			break;
+		case REQUEST_CODE_CARDINFO: //选取目标对象，并发送名片
+			targetUid = data.getLongExtra("target_uid", 0);
+			targetName = data.getStringExtra("target_name");
+			Log4jLog.i(LONG_TAG, "发送名片 target_uid=" + targetUid + ", target_name=" + targetName);
+			
+			if (targetUid!=null) {
+				if (chattype == CHATTYPE_PERSON)
+					EntboostCM.sendCardInfo(this.uid, targetUid.toString());
+				else 
+					EntboostCM.sendGroupCardInfo(this.uid, targetUid.toString());
+			}
 			break;
 		}
 	}

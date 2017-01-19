@@ -20,12 +20,17 @@ public class MyActivityManager {
 		
 	}
 	
-	//单例模式
+	/**
+	 * 单例模式
+	 */
 	public static MyActivityManager getInstance() {
 	    return instance;
 	}
 	
-	//把一个activity压入栈中
+	/**
+	 * 把一个activity压入栈中
+	 * @param actvity
+	 */
 	public void pushOneActivity(Activity actvity) {
 	    activityStack.add(actvity);
 	    Log4jLog.d(LONG_TAG, "after push one activity, stack size = " + activityStack.size());
@@ -36,7 +41,10 @@ public class MyActivityManager {
 //	    return activityStack.lastElement();
 //	}
 	
-	//移除一个activity
+	/**
+	 * 移除一个activity
+	 * @param activity
+	 */
 	public void popOneActivity(Activity activity) {
 	    if (activityStack.size() > 0) {
 	        if (activity != null) {
@@ -47,7 +55,31 @@ public class MyActivityManager {
 	    }
 	}
 	
-    // 退出栈中所有Activity
+	/**
+	 * 弹出在某个activity之上的activity
+	 * @param className
+	 */
+	public void popToActivity(String className) {
+		Activity existActivity = getActivity(className);
+		if (existActivity!=null) {
+			boolean found = false;
+	    	Iterator<Activity> it = activityStack.iterator();
+	    	while (it.hasNext()) {
+	    		Activity activity = (Activity)it.next();
+	    		if (existActivity==activity)
+	    			found = true;
+	    		
+	    		if (found) {
+	    			it.remove();
+	    			activity.finish();
+	    		}
+	    	}
+		}
+	}
+	
+    /**
+     * 退出栈中所有Activity
+     */
     public void clearAllActivity() {
         while (!activityStack.isEmpty()) {
             Activity activity = activityStack.pop();
@@ -55,6 +87,17 @@ public class MyActivityManager {
                 activity.finish();
             Log4jLog.d(LONG_TAG, "clear one activity, stack size = " + activityStack.size());
         }
+    }
+    
+    /**
+     * 获取顶部的Activity(不影响栈中元素)
+     * @return
+     */
+    public Activity getTopActivity() {
+    	if (activityStack.size() > 0) {
+    		return activityStack.get(activityStack.size()-1);
+    	}
+    	return null;
     }
     
     /**

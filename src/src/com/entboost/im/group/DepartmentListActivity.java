@@ -89,7 +89,7 @@ public class DepartmentListActivity extends EbActivity {
 				}
 			});
 			
-			if (!selecteduser) {
+			if (!selecteduser) { //非选择视图
 				listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
 					@Override
@@ -123,7 +123,7 @@ public class DepartmentListActivity extends EbActivity {
 						}
 					}
 				});
-			} else {
+			} else { //选择视图
 				listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 					@Override
 					public void onItemClick(AdapterView<?> arg0, View view, int arg2, long arg3) {
@@ -149,10 +149,11 @@ public class DepartmentListActivity extends EbActivity {
 									MemberSelectActivity.addSelectedMember(memberInfo);
 									MemberSelectActivity activity = (MemberSelectActivity)MyActivityManager.getInstance().getActivity(MemberSelectActivity.class.getName());
 									if (activity!=null) {
-										Intent intent = new Intent(view.getContext(), MemberSelectActivity.class);
-										intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-										startActivity(intent);
+//										Intent intent = new Intent(view.getContext(), MemberSelectActivity.class);
+//										intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//										startActivity(intent);
 										
+										DepartmentListActivity.this.finish();
 										activity.onClickOneMember();
 									}
 								}
@@ -178,15 +179,14 @@ public class DepartmentListActivity extends EbActivity {
 
 	@OnClick(R.id.back_top_btn)
 	public void goTop(View view) {
-		//finish();
-		Intent intent;
 		if (selecteduser) {
-			intent = new Intent(view.getContext(), MemberSelectActivity.class);
+			//intent = new Intent(view.getContext(), MemberSelectActivity.class);
+			finish();
 		} else {
-			intent = new Intent(view.getContext(), MainActivity.class);
+			Intent intent = new Intent(view.getContext(), MainActivity.class);
+			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			startActivity(intent);
 		}
-		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-		startActivity(intent);
 	}
 
 	@OnClick(R.id.back_parent_btn)

@@ -8,6 +8,7 @@ import net.yunim.service.entity.DynamicNews;
 import net.yunim.service.entity.FuncInfo;
 import net.yunim.service.entity.GroupInfo;
 import net.yunim.service.listener.EditGroupListener;
+import net.yunim.utils.YINetworkUtils;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -19,6 +20,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -38,18 +40,19 @@ import com.entboost.im.contact.FriendMainFragment;
 import com.entboost.im.contact.SearchContactActivity;
 import com.entboost.im.function.FunctionListFragment;
 import com.entboost.im.function.FunctionMainActivity;
-import com.entboost.im.global.IMStepExecutor;
 import com.entboost.im.global.MyApplication;
 import com.entboost.im.global.OtherUtils;
 import com.entboost.im.global.UIUtils;
 import com.entboost.im.group.PersonGroupEditActivity;
 import com.entboost.im.message.MessageListFragment;
+import com.entboost.im.receiver.NotificationReceiver;
 import com.entboost.im.setting.SettingFragment;
 import com.entboost.im.user.LoginActivity;
 import com.entboost.ui.base.activity.MyActivityManager;
 import com.entboost.ui.base.view.popmenu.PopMenuConfig;
 import com.entboost.ui.base.view.popmenu.PopMenuItem;
 import com.entboost.ui.base.view.popmenu.PopMenuItemOnClickListener;
+import com.entboost.utils.PhoneInfo;
 
 public class MainActivity extends EbMainActivity {
 	
@@ -66,11 +69,15 @@ public class MainActivity extends EbMainActivity {
 
 	@Override
 	public void onBackPressed() {
-		// 实现Home键效果
-		Intent i = new Intent(Intent.ACTION_MAIN);
-		i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		i.addCategory(Intent.CATEGORY_HOME);
-		startActivity(i);
+		//===实现Home键效果===
+		
+		//返回桌面上次停留的页面
+		moveTaskToBack(true);
+		//返回桌面的默认页面
+//		Intent i = new Intent(Intent.ACTION_MAIN);
+//		i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//		i.addCategory(Intent.CATEGORY_HOME);
+//		startActivity(i);
 	}
 
 	@Override
@@ -101,59 +108,135 @@ public class MainActivity extends EbMainActivity {
 		}
 		super.onUserStateChange(uid);
 	}
-
+	
+	public static String EXTRA_BUNDLE = "main_activity_extra_bundle";
+	
+	// 处理接收消息通知事件
+	public static void handleReceiveDynamicNews(Context context, DynamicNews news) {
+		// 接收到消息后，如果程序位于后台运行或手机锁屏状态，需要发送系统通知
+		KeyguardManager km = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+		if (MyApplication.getInstance().isShowNotificationMsg() || km.inKeyguardRestrictedInputMode()) {
+			//检查配置是否允许通知提醒
+			SharedPreferences preferences = context.getSharedPreferences("notificationSetting", Context.MODE_PRIVATE);
+			boolean enableNotify = preferences.getBoolean(String.valueOf(UIUtils.NOTIFICATION_SETTING_MESSAGE_NEW), true);
+			if (!enableNotify) {
+				Log4jLog.d(LONG_TAG, "miss a new message notification");
+				return;
+			}
+			
+			boolean enableDetails = preferences.getBoolean(String.valueOf(UIUtils.NOTIFICATION_SETTING_MESSAGE_DETAILS), true);
+			
+			//解析事件内容并创建Intent
+			boolean typeMatched = true; //是否发送状态栏通知
+			Intent intent = new Intent(context, NotificationReceiver.class);
+			Bundle bundle = new Bundle();
+			bundle.putInt(DynamicNews.DYNAMIC_NEWS_TYPE, news.getType());
+			
+			//不同的消息类型
+			switch(news.getType()) {
+			case DynamicNews.TYPE_GROUPCHAT:
+			case DynamicNews.TYPE_USERCHAT:
+				if (news.getType() == DynamicNews.TYPE_GROUPCHAT) {
+					bundle.putInt(ChatActivity.INTENT_CHATTYPE, ChatActivity.CHATTYPE_GROUP);
+				}
+				bundle.putString(ChatActivity.INTENT_TITLE, news.getTitle());
+				bundle.putLong(ChatActivity.INTENT_UID, news.getSender());
+				break;
+			case DynamicNews.TYPE_CALL:
+				break;
+			case DynamicNews.TYPE_MYMESSAGE:
+				break;
+			case DynamicNews.TYPE_BMESSAGE:
+				break;
+			case DynamicNews.TYPE_MYSYSTEMMESSAGE:
+				typeMatched = false;
+				break;
+			default:
+				typeMatched = false;
+				Log4jLog.e(LONG_TAG, "unhandle DynamicNews type " + news.getType());
+			break;
+			}
+			
+			//发送状态栏通知
+			if (typeMatched) {
+				intent.putExtra(EXTRA_BUNDLE, bundle);
+				UIUtils.sendNotificationMsg(context, R.drawable.notify, enableDetails?news.getTitle():"您有一条未读通知", enableDetails?news.getContentText():"", 
+						EntboostCache.getUnreadNumDynamicNews(), intent, UIUtils.PENDINGINTENT_TYPE_BROADCASE);
+			}
+		}
+	}
+	
 	@Override
 	public void onReceiveDynamicNews(DynamicNews news) {
 		super.onReceiveDynamicNews(news);
 		
-		// 接收到消息后，如果程序位于后台运行，需要发送系统通知
-		KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-		if (MyApplication.getInstance().isShowNotificationMsg() || km.inKeyguardRestrictedInputMode()) {
-			Intent intent = null;
-			if (news.getType() == DynamicNews.TYPE_GROUPCHAT || news.getType() == DynamicNews.TYPE_USERCHAT) {
-				intent = new Intent(this, ChatActivity.class);
-				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-				intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-				intent.setData(Uri.parse("custom://" + System.currentTimeMillis()));
-				if (news.getType() == DynamicNews.TYPE_GROUPCHAT) {
-					intent.putExtra(ChatActivity.INTENT_CHATTYPE, ChatActivity.CHATTYPE_GROUP);
-				}
-				intent.putExtra(ChatActivity.INTENT_TITLE, news.getTitle());
-				intent.putExtra(ChatActivity.INTENT_UID, news.getSender());
-			} else if (news.getType() == DynamicNews.TYPE_CALL) {
-				intent = new Intent(this, CallListActivity.class);
-			} else if (news.getType() == DynamicNews.TYPE_MYMESSAGE) {
-				FuncInfo funcInfo = EntboostCache.getMessageFuncInfo();
-				if (funcInfo != null) {
-					intent = new Intent(this, FunctionMainActivity.class);
-					intent.putExtra("funcInfo", funcInfo);
-					intent.putExtra("tab_type", FuncInfo.SYS_MSG);
-				}
-			} else if (news.getType() == DynamicNews.TYPE_BMESSAGE) {
-				FuncInfo funcInfo = EntboostCache.getMessageFuncInfo();
-				if (funcInfo != null) {
-					intent = new Intent(this, FunctionMainActivity.class);
-					intent.putExtra("funcInfo", funcInfo);
-					intent.putExtra("tab_type", FuncInfo.BC_MSG);
-				}
-				// intent = new Intent(this,
-				// BroadcastMessageListActivity.class);
-			}
-			
-			if (intent != null) {
-				UIUtils.sendNotificationMsg(this, R.drawable.notify, news.getTitle(), news.getContentText(), EntboostCache.getUnreadNumDynamicNews(), intent);
-			}
-		}
+		MainActivity.handleReceiveDynamicNews(this, news);
 		// 更新主菜单的未读数量标记
 		mBottomTabView.getItem(0).showTip(EntboostCache.getUnreadNumDynamicNews());
 	}
 
+	//处理特殊的Intent
+	private void handleIntent() {
+		Bundle bundle = getIntent().getBundleExtra(EXTRA_BUNDLE);
+		
+        if(bundle != null) {
+        	int dynamicNewsType = bundle.getInt(DynamicNews.DYNAMIC_NEWS_TYPE, -1);
+        	if (dynamicNewsType>-1) {
+        		Intent intent = null;
+        		
+				//不同的消息类型
+				switch(dynamicNewsType) {
+				case DynamicNews.TYPE_GROUPCHAT:
+				case DynamicNews.TYPE_USERCHAT:
+					intent = new Intent(this, ChatActivity.class);
+					intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+					//intent.setData(Uri.parse("custom://" + System.currentTimeMillis()));
+					if (bundle.getInt(ChatActivity.INTENT_CHATTYPE) == DynamicNews.TYPE_GROUPCHAT) {
+						intent.putExtra(ChatActivity.INTENT_CHATTYPE, bundle.getInt(ChatActivity.INTENT_CHATTYPE));
+					}
+					intent.putExtra(ChatActivity.INTENT_TITLE, bundle.getString(ChatActivity.INTENT_TITLE));
+					intent.putExtra(ChatActivity.INTENT_UID, bundle.getLong(ChatActivity.INTENT_UID));
+					break;
+				case DynamicNews.TYPE_CALL:
+					intent = new Intent(this, CallListActivity.class);
+					break;
+				case DynamicNews.TYPE_MYMESSAGE:
+				case DynamicNews.TYPE_BMESSAGE:
+					FuncInfo funcInfo = EntboostCache.getMessageFuncInfo();
+					if (funcInfo != null) {
+						intent = new Intent(this, FunctionMainActivity.class);
+						intent.putExtra("funcInfo", funcInfo);
+						intent.putExtra("tab_type", dynamicNewsType==DynamicNews.TYPE_MYMESSAGE?FuncInfo.SYS_MSG:FuncInfo.BC_MSG);
+					}
+					break;
+				default:
+					Log4jLog.e(LONG_TAG, "unhandle intent, DynamicNews type " + dynamicNewsType);
+				break;
+				}
+				
+				//跳转页面
+				if (intent!=null) {
+					startActivity(intent);
+				}
+        	}
+        }
+	}
+	
 	@Override
 	protected void onNewIntent(Intent intent) {
-		Log4jLog.d(LONG_TAG, "onNewIntent");
-		
+		Log4jLog.i(LONG_TAG, "onNewIntent");
 		super.onNewIntent(intent);
+		
+		MyApplication application = (MyApplication)getApplication();
+		application.setInInterface(true);
+		
+		setIntent(intent);
+		
+		//处理特殊的Intent
+		handleIntent();
 	}
+	
+	private static String ENABLE_IBO_WIZARD = "enableIBOWizard";
 	
 	@SuppressLint("NewApi")
 	@Override
@@ -172,59 +255,124 @@ public class MainActivity extends EbMainActivity {
 		addView("应用", functionListFragment, this.getResources().getDrawable(R.drawable.menu3), this.getResources().getDrawable(R.drawable.menu3_n));
 		
 		settingFragment = new SettingFragment();
-		addView("设置", settingFragment, this.getResources().getDrawable(R.drawable.menu4), this.getResources().getDrawable(R.drawable.menu4_n));
+		addView("我", settingFragment, this.getResources().getDrawable(R.drawable.menu4), this.getResources().getDrawable(R.drawable.menu4_n));
 		
 		mBottomTabView.initItemsTip(R.drawable.tab_red_circle);
 		initMenu();
 		
-		//阻止CPU休眠
+		//手机基本信息
+		String manufacturer = PhoneInfo.getManufacturerName(); //手机厂商
+		String model = PhoneInfo.getModelName(); //手机型号
+		Log4jLog.d(LONG_TAG, "MANUFACTURER:" + manufacturer + ", MODEL:" + model);
+		
 		PowerManager pm =(PowerManager)getSystemService(Context.POWER_SERVICE);
-		wakeLock =pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "entboost_cpu_lock");
-		wakeLock.acquire();
 		
 		//请求电池管理白名单
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			String packageName = this.getPackageName();
-			if (!pm.isIgnoringBatteryOptimizations(packageName)) {
-				Intent intent = new Intent();
-				intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-			    intent.setData(Uri.parse("package:" + packageName));
-			    startActivity(intent);
+			try {
+				if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+					if (manufacturer!=null && manufacturer.equalsIgnoreCase("HUAWEI")) { //华为手机
+						//检查是否允许显示向导
+						SharedPreferences preferences = getSharedPreferences("first", Context.MODE_PRIVATE);
+						boolean enableIBOWizard = preferences.getBoolean(ENABLE_IBO_WIZARD, true);
+						if (enableIBOWizard)
+							showIBOWizardDialog();
+					} else {
+						//直接请求允许忽略电池优化
+						Intent intent = new Intent();
+						intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+					    intent.setData(Uri.parse("package:" + packageName));
+					    startActivityForResult(intent, 1);
+					}
+				}
+			} catch (Exception e) {
+				Log4jLog.e(LONG_TAG, "ignoringBatteryOptimizations error", e);
 			}
-//			else {
-//				intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
-//				startActivity(intent);
-//			}
+		} else {
+			//阻止CPU休眠
+			wakeLock =pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "entboost_cpu_lock");
+			wakeLock.acquire();
 		}
 		
-//		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !pm.isIgnoringBatteryOptimizations(packageName)) {
-//			Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-//			intent.setData(Uri.parse(packageName));
-//			startActivity(intent);
-//		}
+		MyApplication application = (MyApplication)getApplication();
+		application.setInInterface(true);
+		
+		//处理特殊的Intent
+		handleIntent();
+	}
+	
+	/**
+	 * 忽略电池优化向导对话框
+	 */
+	@SuppressLint("NewApi")
+	private void showIBOWizardDialog(){
+	    AlertDialog.Builder normalDialog = new AlertDialog.Builder(this);
+	    normalDialog.setTitle("请忽略电池优化").setMessage("为了更容易接收到消息，请允许本应用忽略电池优化(就是设置为'允许忽略')");
+	    
+	    normalDialog.setPositiveButton("进入设置", new DialogInterface.OnClickListener() {
+	        @Override
+	        public void onClick(DialogInterface dialog, int which) {
+	        	//进入忽略电池优化配置页面
+				Intent intent = new Intent();
+				intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+				startActivity(intent);
+	        }
+	    });
+	    normalDialog.setNeutralButton("不再提示", 
+	        new DialogInterface.OnClickListener() {
+	        @Override
+	        public void onClick(DialogInterface dialog, int which) {
+	        	SharedPreferences preferences = getSharedPreferences("first", Context.MODE_PRIVATE);
+	    		SharedPreferences.Editor editor = preferences.edit();
+	    		editor.putBoolean(ENABLE_IBO_WIZARD, false);
+	    		editor.commit();
+	        }
+	    });
+	    normalDialog.setNegativeButton("取消", 
+		        new DialogInterface.OnClickListener() {
+		        @Override
+		        public void onClick(DialogInterface dialog, int which) {
+		        	//do nothing
+		        }
+		    });
+	    // 创建实例并显示
+	    normalDialog.show();
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (resultCode == RESULT_OK) {
+			if (requestCode == 1){
+			    
+			}
+		} else if (resultCode == RESULT_CANCELED){
+			if (requestCode == 1){
+				//ToastUtils.show(getActivity(), "请开启忽略电池优化~");
+			}
+		}
 	}
 	
 	//处理服务异常和未登陆状态
 	//切换至登录页面并执行登录流程
 	private void handleNotWork() {
-		//退出当前页
-		MainActivity.this.finish();
-		
-		MyApplication application = (MyApplication)getApplication();
-		
-		//退出欢迎页
-//		if (application.getWelcomeActivity()!=null) {
-//			application.getWelcomeActivity().finish();
-//			application.setWelcomeActivity(null);
-//		}
-		
-		application.initEbConfig("MainActivity");
-		IMStepExecutor.getInstance().executeTryLogon(application.getWelcomeActivity());
-		
-		//切换至新的欢迎页
-		Intent intent = new Intent(MainActivity.this, WelcomeActivity.class);
-		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-		startActivity(intent);
+		if (YINetworkUtils.isNetworkConnected(this)) {
+			//退出当前页
+			MainActivity.this.finish();
+			
+			MyApplication application = (MyApplication)getApplication();
+			application.initEbConfig("MainActivity");
+			application.setInInterface(true);
+			application.setLogin(false);
+			//IMStepExecutor.getInstance().executeTryLogon();//application.getWelcomeActivity());
+			
+			//切换至新的欢迎页
+			Intent intent = new Intent(MainActivity.this, WelcomeActivity.class);
+			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			startActivity(intent);
+		} else {
+			Log4jLog.e(LONG_TAG, "network is disconnected");
+		}
 	}
 	
 	@Override
@@ -232,25 +380,25 @@ public class MainActivity extends EbMainActivity {
 		super.onResume();
 		
 		final String mark = getClass().getSimpleName();
-		boolean isWork = OtherUtils.checkServiceWork(0, false, mark);
+		boolean isWork = OtherUtils.checkServiceWork(OtherUtils.MAIN_SERVICE_NAME, 0, false, mark);
 		//service未启动
 		if (!isWork) {
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
 					int times = 0;
-					boolean isWork = OtherUtils.checkServiceWork(times, true, mark);
+					boolean isWork = OtherUtils.checkServiceWork(OtherUtils.MAIN_SERVICE_NAME, times, true, mark);
 					while (!isWork && times<2) {
 						Log4jLog.d(LONG_TAG, "check service work times = " + times);
 						times ++ ;
-						isWork = OtherUtils.checkServiceWork(times, true, mark);
+						isWork = OtherUtils.checkServiceWork(OtherUtils.MAIN_SERVICE_NAME, times, true, mark);
 					}
 					
-					//2秒以后再次在主线程检测
+					//1秒以后再次在主线程检测
 					HandlerToolKit.runOnMainThreadSync(new Runnable() {
 						@Override
 						public void run() {
-							boolean isWork = OtherUtils.checkServiceWork(0, false, mark);
+							boolean isWork = OtherUtils.checkServiceWork(OtherUtils.MAIN_SERVICE_NAME, 0, false, mark);
 							Log4jLog.e(LONG_TAG, "the servie is not running, exit MainActivity and try to start it"); 
 							
 							if (!isWork) {
@@ -258,12 +406,14 @@ public class MainActivity extends EbMainActivity {
 							}
 						}
 					});
-
 				}
 			}).start();
 		} else if (EbCache.getInstance().getSysDataCache().getAppInfo()==null){
 			Log4jLog.e(LONG_TAG, "AppAccountInfo为空, 当前状态未登录，exit MainActivity and try to start it");
 			handleNotWork();
+		} else {
+			//清除通知栏消息
+			UIUtils.cancelNotificationMsg(this);
 		}
 	}
 
@@ -278,6 +428,12 @@ public class MainActivity extends EbMainActivity {
 		super.onPause();
 	}
 	
+	@Override
+	protected void onDestroy() {
+		
+		super.onDestroy();
+	}
+
 	//初始化右上角菜单
 	public void initMenu() {
 		PopMenuConfig config = new PopMenuConfig();
@@ -417,6 +573,10 @@ public class MainActivity extends EbMainActivity {
 			friendMainFragment.notifyDepartmentChanged(false, depCode);
 			friendMainFragment.notifyGroupChanged(false, depCode);
 			friendMainFragment.notifyEntChanged(false, depCode, false, true, false);
+		}
+		
+		if (messageListFragment!=null) {
+			messageListFragment.refreshPage();
 		}
 		
 		super.onUpdateGroup(depCode);

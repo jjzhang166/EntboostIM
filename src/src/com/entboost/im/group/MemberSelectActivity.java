@@ -89,15 +89,15 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 	private Button selectedbtn;
 	
 	//人员选取类型
-	//0=选取多个成员
-	//1=选取一个成员
-	private int selectType = 0;
+	private int selectType = SELECT_TYPE_MULTI;
+	
+	public final static int SELECT_TYPE_MULTI = 0; //选取多个成员
+	public final static int SELECT_TYPE_SINGLE = 1; //选取一个成员
+	
 	//除外的用户编号列表(不允许选中这些编号)
 	private List<Long> excludeUids = new ArrayList<Long>();
 	
 	private long groupid;
-	
-	private long msgid;
 
 	private OnGroupExpandListener entListener;
 
@@ -409,7 +409,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 	}
 
 	private void initSelected() {
-		if (selectType==0) {
+		if (selectType==SELECT_TYPE_MULTI) {
 			selected_area.setVisibility(View.VISIBLE);
 		} else {
 			selected_area.setVisibility(View.GONE);
@@ -492,7 +492,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 		
 		entAdapter.setExcludeUids(excludeUids);
 		entAdapter.setSelectMember(true);
-		if (selectType==1)
+		if (selectType==SELECT_TYPE_SINGLE)
 			entAdapter.setSelectOne(true);
 		entAdapter.setSelectedMemberListener(this);
 		
@@ -541,7 +541,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 					//if (checkSelfGroup(obj)) {
 					MemberInfo memberInfo = (MemberInfo) obj;
 					
-					if (selectType==0) {
+					if (selectType==SELECT_TYPE_MULTI) {
 						ImageView selectImg = (ImageView) v.findViewById(R.id.user_select);
 						if (selectImg.getVisibility() == View.GONE || selectImg.getVisibility() == View.INVISIBLE) {
 							return true;
@@ -575,7 +575,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 							| Intent.FLAG_ACTIVITY_CLEAR_TOP);
 					intent.putExtra("departmentInfo", departmentInfo);
 					intent.putExtra("selecteduser", true);
-					if (selectType==1)
+					if (selectType==SELECT_TYPE_SINGLE)
 						intent.putExtra("selectedone", true);
 					intent.putExtra("excludeUids", (Serializable)excludeUids);
 					startActivity(intent);
@@ -595,7 +595,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 		
 		departmentAdapter.setExcludeUids(excludeUids);
 		departmentAdapter.setSelectMember(true);
-		if (selectType==1)
+		if (selectType==SELECT_TYPE_SINGLE)
 			departmentAdapter.setSelectOne(true);
 		departmentAdapter.setSelectedMemberListener(this);
 		
@@ -637,7 +637,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 //				if (checkSelfGroup(obj)) {
 				MemberInfo memberInfo = (MemberInfo) obj;
 				
-				if (selectType==0) { //多选视图
+				if (selectType==SELECT_TYPE_MULTI) { //多选视图
 					ImageView selectImg = (ImageView) view.findViewById(R.id.user_select);
 					if (selectImg.getVisibility() == View.GONE || selectImg.getVisibility() == View.INVISIBLE) {
 						return true;
@@ -675,7 +675,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 		
 		groupAdapter.setExcludeUids(excludeUids);
 		groupAdapter.setSelectMember(true);
-		if (selectType==1)
+		if (selectType==SELECT_TYPE_SINGLE)
 			groupAdapter.setSelectOne(true);
 		groupAdapter.setSelectedMemberListener(this);
 		
@@ -718,7 +718,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 				//if (checkSelfGroup(obj)) {
 				MemberInfo memberInfo = (MemberInfo) obj;
 				
-				if (selectType==0) { //多选视图
+				if (selectType==SELECT_TYPE_MULTI) { //多选视图
 					ImageView selectImg = (ImageView) view.findViewById(R.id.user_select);
 					if (selectImg.getVisibility() == View.GONE || selectImg.getVisibility() == View.INVISIBLE) {
 						return true;
@@ -755,7 +755,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 		
 		friendAdapter.setExcludeUids(excludeUids);
 		friendAdapter.setSelectMember(true);
-		if (selectType==1)
+		if (selectType==SELECT_TYPE_SINGLE)
 			friendAdapter.setSelectOne(true);
 		
 		//点击成员事件
@@ -767,7 +767,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 					//if (checkSelfGroup(obj)) {
 					ContactInfo contactInfo = (ContactInfo)obj;
 					
-					if (selectType==0) {
+					if (selectType==SELECT_TYPE_MULTI) {
 						ImageView selectImg = (ImageView) v.findViewById(R.id.user_select);
 						if (selectImg.getVisibility() == View.GONE || selectImg.getVisibility() == View.INVISIBLE) {
 							return true;
@@ -841,8 +841,7 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 		if (eus!=null)
 			excludeUids.addAll(eus);
 		groupid = getIntent().getLongExtra("groupid", -1);
-		msgid 	= getIntent().getLongExtra("msgid", -1);
-		selectType = msgid>0?1:0;
+		selectType 	= getIntent().getIntExtra("selectType", SELECT_TYPE_MULTI);
 		
 		selected_area = (LinearLayout) findViewById(R.id.selected_area);
 		selected_count = (TextView)findViewById(R.id.selected_count);

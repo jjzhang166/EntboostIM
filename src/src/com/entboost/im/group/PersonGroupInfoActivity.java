@@ -12,7 +12,6 @@ import net.yunim.service.entity.PersonGroupInfo;
 import net.yunim.service.listener.DelGroupListener;
 import net.yunim.service.listener.DelMemberListener;
 import net.yunim.service.listener.LoadAllMemberListener;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -123,9 +122,8 @@ public class PersonGroupInfoActivity extends EbActivity {
 
 	private void init() {
 		//设置部门头像
-		Context context = getApplicationContext();
-		Resources resources = context.getResources();
-		int indentify = resources.getIdentifier(context.getPackageName()+":drawable/"+"group_head_"+groupInfo.getType(), null, null);
+		Resources resources = getResources();
+		int indentify = resources.getIdentifier(getPackageName()+":drawable/"+"group_head_"+groupInfo.getType(), null, null);
 		ImageView head = (ImageView) findViewById(R.id.persongroup_head);
 		head.setImageResource(indentify);
 		
@@ -219,6 +217,7 @@ public class PersonGroupInfoActivity extends EbActivity {
 					@Override
 					public void run() {
 						Intent intent = new Intent(PersonGroupInfoActivity.this, MemberSelectActivity.class);
+						intent.putExtra("selectType", MemberSelectActivity.SELECT_TYPE_MULTI);
 						intent.putExtra("groupid", depid);
 						
 						List<MemberInfo> memberInfos = EntboostCache.getGroupMemberInfos(depid);

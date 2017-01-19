@@ -2,7 +2,6 @@ package com.entboost.im.chat;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import net.yunim.service.EntboostCM;
 import net.yunim.service.EntboostUM;
@@ -109,42 +108,38 @@ public class CallAdapter extends BaseAdapter {
 							}
 						}
 					});
-			holder.itemsBtnAccept
-					.setOnClickListener(new View.OnClickListener() {
-
+			
+			holder.itemsBtnAccept.setOnClickListener(new View.OnClickListener() {
 						@Override
 						public void onClick(View v) {
 							CallInfo callInfo = (CallInfo) getItem(position);
-							EntboostCM.callAnswer(callInfo.getCallid(),
-									callInfo.getCallTo(), true);
+							EntboostCM.callAnswer(callInfo.getCallid(), callInfo.getCallTo(), true);
+							
 							enableBtns(holder);
 							callInfo.setType(CallInfo.TYPE_ACCEPT);
 							holder.itemstype.setText("已接受");
-							Intent intent = new Intent(mContext,
-									ChatActivity.class);
-							intent.putExtra(ChatActivity.INTENT_TITLE, callInfo
-									.getCardInfo().getNa());
-							intent.putExtra(ChatActivity.INTENT_UID,
-									callInfo.getCallTo());
+							
+							Intent intent = new Intent(mContext, ChatActivity.class);
+							intent.putExtra(ChatActivity.INTENT_TITLE, callInfo.getCardInfo().getNa());
+							intent.putExtra(ChatActivity.INTENT_UID, callInfo.getCallTo());
 							mContext.startActivity(intent);
+							
 							((CallListActivity) mContext).finish();
 						}
 					});
-			holder.itemsBtnReject
-					.setOnClickListener(new View.OnClickListener() {
-
+			
+			holder.itemsBtnReject.setOnClickListener(new View.OnClickListener() {
 						@Override
 						public void onClick(View v) {
 							CallInfo callInfo = (CallInfo) getItem(position);
-							EntboostCM.callAnswer(callInfo.getCallid(),
-									callInfo.getCallTo(), false);
+							EntboostCM.callAnswer(callInfo.getCallid(), callInfo.getCallTo(), false);
 							enableBtns(holder);
 							callInfo.setType(CallInfo.TYPE_REJECT);
 							holder.itemstype.setText("已拒绝");
 						}
 					});
+			
 			holder.itemsBtnAdd.setOnClickListener(new View.OnClickListener() {
-
 				@Override
 				public void onClick(View v) {
 					final CallInfo callInfo = (CallInfo) getItem(position);
@@ -156,6 +151,16 @@ public class CallAdapter extends BaseAdapter {
 								@Override
 								public void run() {
 									UIUtils.showToast(mContext, arg0);
+								}
+							});
+						}
+						
+						@Override
+						public void onOauthForword() {
+							HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+								@Override
+								public void run() {
+									UIUtils.showToast(mContext, "加为好友的邀请已经发出，请等待对方验证！");
 								}
 							});
 						}

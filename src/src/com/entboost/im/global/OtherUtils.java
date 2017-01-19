@@ -1,9 +1,9 @@
 package com.entboost.im.global;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
-
-import com.entboost.Log4jLog;
-import com.entboost.im.chat.ChatActivity;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -17,8 +17,38 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 
+import com.entboost.Log4jLog;
+
 public class OtherUtils {
 	private static String LONG_TAG = OtherUtils.class.getName();
+	
+	/**
+	 * 关闭输入流
+	 * @param is
+	 */
+	public static void closeInputStream(InputStream is) {
+		if (is!=null) {
+			try {
+				is.close();
+			} catch (IOException e) {
+				Log4jLog.e(LONG_TAG, "closeInputStream error", e);
+			}
+		}
+	}
+	
+	/**
+	 * 关闭输出流
+	 * @param os
+	 */
+	public static void closeOutputStream(OutputStream os) {
+		if (os!=null) {
+			try {
+				os.close();
+			} catch (IOException e) {
+				Log4jLog.e(LONG_TAG, "closeOutputStream error", e);
+			}
+		}
+	}
 	
 	/**
 	 * 根据Uri获取文件的绝对路径，解决Android4.4以上版本Uri转换
@@ -122,8 +152,17 @@ public class OtherUtils {
 	 */
 	public static boolean isGooglePhotosUri(Uri uri) {
 		return "com.google.android.apps.photos.content".equals(uri.getAuthority());
-	}	
-
+	}
+    
+    /**
+     * IM API通讯服务
+     */
+    public static String EB_CLIENT_SERVICE_NAME = "net.yunim.service.EbClientService";
+    /**
+     * IM主服务
+     */
+    public static String MAIN_SERVICE_NAME	= "com.entboost.im.service.MainService"; 
+    
     /** 
      * 判断某个服务是否正在运行的方法 
      * @param mContext 
@@ -151,22 +190,22 @@ public class OtherUtils {
         if (!isWork)
         	Log4jLog.e(LONG_TAG, "service '" + serviceName +"' is not exist, mark = " + mark);
         return isWork;  
-    }
-    
+    }	
+	
 	/**
 	 * 检测服务是否正在运行
 	 * @param times 次数
-	 * @param waitting 如非正在运行，是否延时
+	 * @param waitting 如非正在运行，是否延时(标准单位500毫秒)
 	 * @param mark 标记
 	 * @return
 	 */
-	public static boolean checkServiceWork(int times, boolean waitting, String mark) {
-		String serviceName = "net.yunim.service.EbClientService";
+	public static boolean checkServiceWork(String serviceName, int times, boolean waitting, String mark) {
+		//String serviceName = "net.yunim.service.EbClientService";
 		
 		boolean isWork = OtherUtils.isServiceWork(MyApplication.getInstance(), serviceName, mark);
 		if (!isWork && waitting) {
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(500);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -174,4 +213,5 @@ public class OtherUtils {
 		
 		return isWork;
 	}
+	
 }

@@ -277,12 +277,16 @@ public class LoginActivity extends EbActivity {
 				HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 					@Override
 					public void run() {
+						((MyApplication)getApplicationContext()).setLogin(true);
+						
 						removeProgressDialog();
+						//跳转到主界面
 						Intent intent = new Intent(LoginActivity.this, MainActivity.class);
 						intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
 								| Intent.FLAG_ACTIVITY_SINGLE_TOP
 								| Intent.FLAG_ACTIVITY_CLEAR_TOP);
 						startActivity(intent);
+						//关闭当前页面
 						finish();
 					}
 				});

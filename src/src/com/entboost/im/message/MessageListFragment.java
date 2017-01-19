@@ -38,6 +38,13 @@ public class MessageListFragment extends EbFragment {
 	@Override
 	public void onResume() {
 		super.onResume();
+		refreshPage();
+	}
+
+	/**
+	 * 刷新变更
+	 */
+	public void refreshPage() {
 		if (dynamicNewsAdapter != null) {
 			dynamicNewsAdapter.setList(EntboostCache.getHistoryMsgList());
 			dynamicNewsAdapter.notifyDataSetChanged();
@@ -52,7 +59,7 @@ public class MessageListFragment extends EbFragment {
 			}
 		}
 	}
-
+	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		final View view = onCreateEbView(R.layout.fragment_message_list, inflater, container);
 		mAbPullListView = (ListView) view.findViewById(R.id.mListView);
@@ -142,6 +149,12 @@ public class MessageListFragment extends EbFragment {
 				dynamicNewsAdapter.setList(EntboostCache.getHistoryMsgList());
 				dynamicNewsAdapter.notifyDataSetChanged();
 			}
+			@Override
+			public void onDynamicNewsChanged(Long otherSideId) {
+				dynamicNewsAdapter.setList(EntboostCache.getHistoryMsgList());
+				dynamicNewsAdapter.notifyDataSetChanged();
+			}
+			
 		};
 		Entboost.addListener(listener);
 		

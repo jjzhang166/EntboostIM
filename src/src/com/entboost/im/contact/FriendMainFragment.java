@@ -550,6 +550,7 @@ public class FriendMainFragment extends EbFragment {
 				refreshPage(true);
 			}
 		});
+		
 		initContactView(view);
 		initGroup(view);
 		initMyDepartment(view);
