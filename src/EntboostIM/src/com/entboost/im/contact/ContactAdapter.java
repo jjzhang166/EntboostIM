@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import net.yunim.service.EntboostCache;
 import net.yunim.service.constants.EB_USER_LINE_STATE;
@@ -17,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,8 +28,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.entboost.im.R;
+import com.entboost.im.comparator.ContactGroupComparator;
+import com.entboost.im.comparator.ContactInfoComparator;
+import com.entboost.im.global.MyApplication;
 import com.entboost.im.group.MemberSelectActivity;
 import com.entboost.ui.utils.AbImageUtil;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 
 public class ContactAdapter extends BaseExpandableListAdapter {
 	private Map<Long, List<ContactInfo>> mList = new HashMap<Long, List<ContactInfo>>();
@@ -63,8 +69,8 @@ public class ContactAdapter extends BaseExpandableListAdapter {
 		mList.clear();
 		
 		//排序
-		Collections.sort(contactInfos);
-		Collections.sort(grouplist);
+		Collections.sort(contactInfos, new ContactInfoComparator());
+		Collections.sort(grouplist, new ContactGroupComparator());
 		
 		//未分组
 		ContactGroup nogroup = new ContactGroup();
@@ -124,7 +130,7 @@ public class ContactAdapter extends BaseExpandableListAdapter {
 
 	@Override
 	public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-		ItemViewHolder holder2 = null;
+		final ItemViewHolder holder2;
 		if (convertView == null || convertView.getTag() instanceof GroupViewHolder) {
 			// 使用自定义的list_items作为Layout
 			convertView = LayoutInflater.from(mContext).inflate(R.layout.item_user, parent, false);
@@ -162,24 +168,52 @@ public class ContactAdapter extends BaseExpandableListAdapter {
 		
 		holder2.userName.setText(name);
 		String type = "";
-		if (ci.getCon_uid() == null) {
+		if (ci.getCon_uid()==null || ci.getCon_uid()==0) { //非系统用户
 			type = "[非系统用户]";
 			if (selectMember)
 				holder2.user_select.setVisibility(View.INVISIBLE);
 			
 			holder2.userImg.setImageBitmap(AbImageUtil.grey(BitmapFactory.decodeResource(mContext.getResources(), R.drawable.default_user)));
-		} else {
+		} else { //系统用户
 			AppAccountInfo appInfo = EntboostCache.getAppInfo();
 			if (ci.getType() == 0 && (appInfo.getSystem_setting() & AppAccountInfo.SYSTEM_SETTING_VALUE_AUTH_CONTACT) == AppAccountInfo.SYSTEM_SETTING_VALUE_AUTH_CONTACT) {
 				type = "[系统用户-未验证]";
 			} else {
-				type = "[系统用户]";
+				type = "";//"[系统用户]";
 			}
-			if (ci.getState() <= EB_USER_LINE_STATE.EB_LINE_STATE_OFFLINE.getValue()) {
-				holder2.userImg.setImageBitmap(AbImageUtil.grey(BitmapFactory.decodeResource(mContext.getResources(), R.drawable.default_user)));
-			} else {
-				holder2.userImg.setImageResource(R.drawable.default_user);
-			}
+			
+			ImageLoader.getInstance().loadImage(ci.getHeadUrl(), MyApplication.getInstance().getUserImgOptions(), new ImageLoadingListener() {
+				@Override
+				public void onLoadingStarted(String arg0, View arg1) {
+				}
+
+				@Override
+				public void onLoadingFailed(String arg0, View arg1, FailReason arg2) {
+					if (ci.getState() <= EB_USER_LINE_STATE.EB_LINE_STATE_OFFLINE.getValue()) { //离线
+						holder2.userImg.setImageBitmap(AbImageUtil
+								.grey(BitmapFactory.decodeResource(mContext.getResources(),R.drawable.default_user)));
+					} else { //在线
+						holder2.userImg.setImageResource(R.drawable.default_user);
+					}
+				}
+
+				@Override
+				public void onLoadingComplete(String arg0, View arg1, Bitmap arg2) {
+					if (arg2 == null) {
+						onLoadingFailed(arg0, arg1, null);
+						return;
+					}
+					if (ci.getState() <= EB_USER_LINE_STATE.EB_LINE_STATE_OFFLINE.getValue()) { //离线
+						holder2.userImg.setImageBitmap(AbImageUtil.grey(arg2));
+					} else { //在线
+						holder2.userImg.setImageBitmap(arg2);
+					}
+				}
+
+				@Override
+				public void onLoadingCancelled(String arg0, View arg1) {
+				}
+			});
 		}
 		
 		//点击头像事件；选择视图不允许点击

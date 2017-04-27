@@ -44,7 +44,7 @@
             android:inputType="text"
             android:padding="5dp"
             android:singleLine="true"
-            android:textColorHint="#e0e0e0"
+            android:textColorHint="@color/text_color_hint"
             android:textSize="14sp" />
 
         <ImageButton
@@ -93,7 +93,7 @@
             android:inputType="textPassword"
             android:padding="5dp"
             android:singleLine="true"
-            android:textColorHint="#e0e0e0"
+            android:textColorHint="@color/text_color_hint"
             android:textSize="14sp" />
 
         <ImageButton

@@ -155,8 +155,8 @@ public class MyApplication extends Application {
 		ImageLoader.getInstance().init(imgConfig.build());
 		
 		defaultImgOptions = createImgOptions(R.drawable.entboost_logo, R.drawable.entboost_logo, R.drawable.entboost_logo);
-		userImgOptions = createImgOptions(R.drawable.default_user, R.drawable.default_user, R.drawable.default_user);
-		funcInfoImgOptions = createImgOptions(R.drawable.default_app, R.drawable.default_app, R.drawable.default_app);
+		userImgOptions = createImgOptions(0, R.drawable.default_user, R.drawable.default_user);
+		funcInfoImgOptions = createImgOptions(0, R.drawable.default_app, R.drawable.default_app);
 	}
 	
 	//检查当前进程是否主进程
@@ -174,11 +174,21 @@ public class MyApplication extends Application {
         return false;
     }
 	
-	//创建图标加载选项
+	//创建ImageLoader加载选项
 	private DisplayImageOptions createImgOptions(int loadingResid, int emptyResid, int failResid) {
-		return new DisplayImageOptions.Builder()
-			.showImageOnLoading(loadingResid).showImageForEmptyUri(emptyResid).showImageOnFail(failResid)
-			.cacheInMemory(true).cacheOnDisk(true).considerExifParams(true).bitmapConfig(Bitmap.Config.RGB_565).build();
+		DisplayImageOptions.Builder builder = new DisplayImageOptions.Builder();
+		builder.cacheInMemory(true)
+			.cacheOnDisk(true)
+			.considerExifParams(true)
+			.bitmapConfig(Bitmap.Config.RGB_565);
+		if (loadingResid!=0)
+			builder.showImageOnLoading(loadingResid);
+		if (failResid!=0)
+			builder.showImageOnFail(failResid);
+		if (emptyResid!=0)
+			builder.showImageForEmptyUri(emptyResid);
+		
+		return builder.build();
 	}
 
 	public static MyApplication getInstance() {

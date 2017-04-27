@@ -121,7 +121,7 @@ public class CallAdapter extends BaseAdapter {
 							
 							Intent intent = new Intent(mContext, ChatActivity.class);
 							intent.putExtra(ChatActivity.INTENT_TITLE, callInfo.getCardInfo().getNa());
-							intent.putExtra(ChatActivity.INTENT_UID, callInfo.getCallTo());
+							intent.putExtra(ChatActivity.INTENT_TOID, callInfo.getCallTo());
 							mContext.startActivity(intent);
 							
 							((CallListActivity) mContext).finish();
@@ -173,7 +173,7 @@ public class CallAdapter extends BaseAdapter {
 									holder.itemstype.setText("已接受");
 									Intent intent = new Intent(mContext, ChatActivity.class);
 									intent.putExtra(ChatActivity.INTENT_TITLE, callInfo.getCardInfo().getNa());
-									intent.putExtra(ChatActivity.INTENT_UID, callInfo.getCallTo());
+									intent.putExtra(ChatActivity.INTENT_TOID, callInfo.getCallTo());
 									mContext.startActivity(intent);
 									((CallListActivity) mContext).finish();
 								}

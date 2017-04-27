@@ -3,6 +3,7 @@ package com.entboost.im.message;
 import net.yunim.eb.signlistener.EntboostIMListener;
 import net.yunim.service.Entboost;
 import net.yunim.service.EntboostCache;
+import net.yunim.service.entity.BroadcastMessage;
 import net.yunim.service.entity.DynamicNews;
 import net.yunim.service.entity.FuncInfo;
 import android.content.Intent;
@@ -15,6 +16,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ListView;
 
+import com.entboost.Log4jLog;
 import com.entboost.im.MainActivity;
 import com.entboost.im.R;
 import com.entboost.im.base.EbFragment;
@@ -26,6 +28,8 @@ import com.entboost.ui.base.view.popmenu.PopMenu;
 import com.entboost.ui.base.view.popmenu.PopMenuItemOnClickListener;
 
 public class MessageListFragment extends EbFragment {
+	
+	private static String LONG_TAG = MessageListFragment.class.getName();
 
 	private ListView mAbPullListView;
 	private MessageAdapter dynamicNewsAdapter;
@@ -46,7 +50,7 @@ public class MessageListFragment extends EbFragment {
 	 */
 	public void refreshPage() {
 		if (dynamicNewsAdapter != null) {
-			dynamicNewsAdapter.setList(EntboostCache.getHistoryMsgList());
+			dynamicNewsAdapter.setList(EntboostCache.getDynamicNewsList());
 			dynamicNewsAdapter.notifyDataSetChanged();
 			int noReadNums = EntboostCache.getUnreadNumDynamicNews();
 			if (noReadNums > 0) {
@@ -63,7 +67,7 @@ public class MessageListFragment extends EbFragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		final View view = onCreateEbView(R.layout.fragment_message_list, inflater, container);
 		mAbPullListView = (ListView) view.findViewById(R.id.mListView);
-		dynamicNewsAdapter = new MessageAdapter(view.getContext(), inflater, EntboostCache.getHistoryMsgList());
+		dynamicNewsAdapter = new MessageAdapter(view.getContext(), inflater, EntboostCache.getDynamicNewsList());
 		mAbPullListView.setAdapter(dynamicNewsAdapter);
 		mAbPullListView.setLongClickable(true);
 		
@@ -71,8 +75,8 @@ public class MessageListFragment extends EbFragment {
 		popMenu.addItem("删除该聊天",R.layout.item_menu, new PopMenuItemOnClickListener() {
 			@Override
 			public void onItemClick() {
-				EntboostCache.delDynamicNews((DynamicNews) popMenu.getObj());
-				dynamicNewsAdapter.setList(EntboostCache.getHistoryMsgList());
+				EntboostCache.deleteDynamicNews((DynamicNews) popMenu.getObj(), true);
+				dynamicNewsAdapter.setList(EntboostCache.getDynamicNewsList());
 				dynamicNewsAdapter.notifyDataSetChanged();
 				((MainActivity) activity).mBottomTabView.getItem(0).showTip(EntboostCache.getUnreadNumDynamicNews());
 			}
@@ -81,8 +85,8 @@ public class MessageListFragment extends EbFragment {
 		popMenu.addItem("删除所有聊天",R.layout.item_menu, new PopMenuItemOnClickListener() {
 			@Override
 			public void onItemClick() {
-				EntboostCache.clearAllMsgHistory();
-				dynamicNewsAdapter.setList(EntboostCache.getHistoryMsgList());
+				EntboostCache.clearAllDynamicNews(true);
+				dynamicNewsAdapter.setList(EntboostCache.getDynamicNewsList());
 				dynamicNewsAdapter.notifyDataSetChanged();
 				((MainActivity) activity).mBottomTabView.getItem(0).showTip(EntboostCache.getUnreadNumDynamicNews());
 			}
@@ -123,21 +127,49 @@ public class MessageListFragment extends EbFragment {
 							intent.putExtra(ChatActivity.INTENT_CHATTYPE, ChatActivity.CHATTYPE_GROUP);
 						}
 						intent.putExtra(ChatActivity.INTENT_TITLE, newsInfo.getTitle());
-						intent.putExtra(ChatActivity.INTENT_UID, newsInfo.getSender());
+						intent.putExtra(ChatActivity.INTENT_TOID, newsInfo.getSender());
 						startActivity(intent);
 					} else if (newsInfo.getType() == DynamicNews.TYPE_CALL) { //被邀请加入聊天的通知
 						Intent intent = new Intent(MessageListFragment.this.getActivity(), CallListActivity.class);
 						startActivity(intent);
 					} else if (newsInfo.getType() == DynamicNews.TYPE_MYMESSAGE || newsInfo.getType() == DynamicNews.TYPE_BMESSAGE) { //我的消息(包括系统消息和广播消息)
-						FuncInfo funcInfo = EntboostCache.getMessageFuncInfo();
-						if (funcInfo != null) {
-							Intent intent = new Intent(activity, FunctionMainActivity.class);
-							intent.putExtra("funcInfo", funcInfo);
-							intent.putExtra("tab_type", newsInfo.getType() == DynamicNews.TYPE_MYMESSAGE?FuncInfo.SYS_MSG:FuncInfo.BC_MSG);
-							startActivity(intent);
+						//自定义广播消息
+						//subType=[0-99]保留给系统使用，其它由第三方自行定制
+						if (newsInfo.getType() == DynamicNews.TYPE_BMESSAGE && newsInfo.getSubType()>=100) {
+							switch(newsInfo.getSubType()) {
+							case 100:
+								Log4jLog.i(LONG_TAG, newsInfo.getTitle()); //标题
+								Log4jLog.i(LONG_TAG, newsInfo.getContent()); //自定义内容1
+								Log4jLog.i(LONG_TAG, newsInfo.getContentText()); //自定义内容2
+								if (newsInfo.getAssociate_id()!=null) {
+									//获取关联的广播消息记录
+									BroadcastMessage brmsg = EntboostCache.getBroadcastMessageById(newsInfo.getAssociate_id().intValue());
+									if (brmsg!=null) {
+										Log4jLog.i(LONG_TAG, brmsg.getMsg_name());
+										Log4jLog.i(LONG_TAG, brmsg.getMsg_content());
+									}
+								}
+								//自定义实现，例如：打开webview访问某个URL地址
+								break;
+							case 101:
+								//自定义实现，参考上述
+								break;
+							default:
+								//其它...
+								break;
+							}
+						} else { //系统广播消息或系统消息
+							//跳转到浏览系统消息和广播消息的页面
+							FuncInfo funcInfo = EntboostCache.getMessageFuncInfo();
+							if (funcInfo != null) {
+								Intent intent = new Intent(activity, FunctionMainActivity.class);
+								intent.putExtra("funcInfo", funcInfo);
+								intent.putExtra("tab_type", newsInfo.getType() == DynamicNews.TYPE_MYMESSAGE?FuncInfo.SYS_MSG:FuncInfo.BC_MSG);
+								startActivity(intent);
+							}
+//							Intent intent = new Intent(MessageListFragment.this.getActivity(), BroadcastMessageListActivity.class);
+//							startActivity(intent);
 						}
-//						Intent intent = new Intent(MessageListFragment.this.getActivity(), BroadcastMessageListActivity.class);
-//						startActivity(intent);
 					}
 				}
 			}
@@ -146,12 +178,12 @@ public class MessageListFragment extends EbFragment {
 		listener = new EntboostIMListener() {
 			@Override
 			public void onReceiveDynamicNews(DynamicNews news) {
-				dynamicNewsAdapter.setList(EntboostCache.getHistoryMsgList());
+				dynamicNewsAdapter.setList(EntboostCache.getDynamicNewsList());
 				dynamicNewsAdapter.notifyDataSetChanged();
 			}
 			@Override
 			public void onDynamicNewsChanged(Long otherSideId) {
-				dynamicNewsAdapter.setList(EntboostCache.getHistoryMsgList());
+				dynamicNewsAdapter.setList(EntboostCache.getDynamicNewsList());
 				dynamicNewsAdapter.notifyDataSetChanged();
 			}
 			

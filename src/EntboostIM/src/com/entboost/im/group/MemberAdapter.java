@@ -24,6 +24,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.entboost.im.R;
+import com.entboost.im.comparator.MemberInfoComparator;
+import com.entboost.im.global.MyApplication;
 import com.entboost.ui.utils.AbImageUtil;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
@@ -47,23 +49,30 @@ public class MemberAdapter extends BaseAdapter {
 	}
 
 	public void setInput(List<MemberInfo> memberInfos) {
+		this.memberInfos.clear();
+		
 		if (memberInfos != null) {
-			List<MemberInfo> online = new ArrayList<MemberInfo>();
-			List<MemberInfo> offline = new ArrayList<MemberInfo>();
-			for (int i = 0; i < memberInfos.size(); i++) {
-				MemberInfo member = memberInfos.get(i);
-				if (member.getState() <= EB_USER_LINE_STATE.EB_LINE_STATE_OFFLINE
-						.getValue()) {
-					offline.add(member);
-				} else {
-					online.add(member);
-				}
-			}
-			Collections.sort(online);
-			Collections.sort(offline);
-			this.memberInfos.clear();
-			this.memberInfos.addAll(online);
-			this.memberInfos.addAll(offline);
+			Collections.sort(memberInfos, new MemberInfoComparator());
+			this.memberInfos.addAll(memberInfos);
+			
+//			List<MemberInfo> online = new ArrayList<MemberInfo>(); //暂存在线成员
+//			List<MemberInfo> offline = new ArrayList<MemberInfo>(); //暂存离线成员
+//			
+//			for (int i = 0; i < memberInfos.size(); i++) {
+//				MemberInfo member = memberInfos.get(i);
+//				if (member.getState() <= EB_USER_LINE_STATE.EB_LINE_STATE_OFFLINE.getValue()) {
+//					offline.add(member);
+//				} else {
+//					online.add(member);
+//				}
+//			}
+//			
+//			//排序，待定：与MemberInfoComparator内部逻辑有冲突
+//			Collections.sort(online, new MemberInfoComparator());
+//			Collections.sort(offline, new MemberInfoComparator());
+//			
+//			this.memberInfos.addAll(online);
+//			this.memberInfos.addAll(offline);
 		}
 	}
 
@@ -131,25 +140,24 @@ public class MemberAdapter extends BaseAdapter {
 				}
 			}
 		});
+		
+		//设置头像
 		Bitmap img = YIResourceUtils.getHeadBitmap(memberInfo.getH_r_id());
 		if (img != null) {
-			if (memberInfo.getState() <= EB_USER_LINE_STATE.EB_LINE_STATE_OFFLINE
-					.getValue()) {
+			if (memberInfo.getState() <= EB_USER_LINE_STATE.EB_LINE_STATE_OFFLINE.getValue()) {
 				holder1.userImg.setImageBitmap(AbImageUtil.grey(img));
 			} else {
 				holder1.userImg.setImageBitmap(img);
 			}
 		} else {
-			ImageLoader.getInstance().loadImage(memberInfo.getHeadUrl(), new ImageLoadingListener() {
+			ImageLoader.getInstance().loadImage(memberInfo.getHeadUrl(), MyApplication.getInstance().getUserImgOptions(), new ImageLoadingListener() {
 				@Override
 				public void onLoadingStarted(String arg0, View arg1) {
 				}
 
 				@Override
-				public void onLoadingFailed(String arg0, View arg1,
-						FailReason arg2) {
-					if (memberInfo.getState() <= EB_USER_LINE_STATE.EB_LINE_STATE_OFFLINE
-							.getValue()) {
+				public void onLoadingFailed(String arg0, View arg1, FailReason arg2) {
+					if (memberInfo.getState() <= EB_USER_LINE_STATE.EB_LINE_STATE_OFFLINE.getValue()) {
 						holder1.userImg.setImageBitmap(AbImageUtil
 								.grey(BitmapFactory.decodeResource(mContext.getResources(),R.drawable.default_user)));
 					} else {
@@ -158,8 +166,7 @@ public class MemberAdapter extends BaseAdapter {
 				}
 
 				@Override
-				public void onLoadingComplete(String arg0, View arg1,
-						Bitmap arg2) {
+				public void onLoadingComplete(String arg0, View arg1, Bitmap arg2) {
 					if (arg2 == null) {
 						onLoadingFailed(arg0, arg1, null);
 						return;
@@ -176,6 +183,7 @@ public class MemberAdapter extends BaseAdapter {
 				}
 			});
 		}
+		
 		if (selecteduser) {
 			holder1.user_select.setVisibility(View.VISIBLE);
 		}

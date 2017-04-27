@@ -458,7 +458,24 @@ public abstract class AbActivity extends FragmentActivity {
 		});
 		builder.create().show();
 	}
-
+	
+	/**
+	 * 对话框dialog(确认)
+	 * @param title
+	 * @param msg
+	 * @param mOkOnClickListener
+	 */
+	public AlertDialog showDialogOnlyConfirm(String title, String msg, DialogInterface.OnClickListener mOkOnClickListener) {
+		AlertDialog.Builder builder = new Builder(this);
+		builder.setMessage(msg);
+		builder.setTitle(title);
+		builder.setPositiveButton("确认", mOkOnClickListener);
+		AlertDialog mAlertDialog = builder.create();
+		mAlertDialog.show();
+		
+		return mAlertDialog;
+	}
+	
 	/**
 	 * 描述：对话框dialog （确认，取消）.
 	 * 

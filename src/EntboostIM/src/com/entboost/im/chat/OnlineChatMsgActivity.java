@@ -11,7 +11,7 @@ import android.webkit.WebViewClient;
 import com.entboost.im.R;
 import com.entboost.im.base.EbActivity;
 
-public class OnlieChatMsgActivity extends EbActivity {
+public class OnlineChatMsgActivity extends EbActivity {
 	private WebView mWebView;
 	
 	@SuppressLint("SetJavaScriptEnabled")
@@ -44,7 +44,7 @@ public class OnlieChatMsgActivity extends EbActivity {
 			@Override
 			public void onReceivedError(WebView view, int errorCode,
 					String description, String failingUrl) {
-				UIUtils.showToast(OnlieChatMsgActivity.this,
+				UIUtils.showToast(OnlineChatMsgActivity.this,
 						"无法打开扩展应用，请检查网络是否通畅！");
 				finish();
 			}

@@ -1,9 +1,13 @@
 package com.entboost.im.message;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import net.yunim.service.EntboostCache;
 import net.yunim.service.cache.EbCache;
+import net.yunim.service.entity.ChatRoomRichMsg;
 import net.yunim.service.entity.DynamicNews;
 import net.yunim.service.entity.GroupInfo;
 import net.yunim.utils.YIResourceUtils;
@@ -17,14 +21,30 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.entboost.Log4jLog;
 import com.entboost.im.R;
+import com.entboost.im.comparator.DynamicNewsCompare;
 import com.entboost.im.global.MyApplication;
 import com.entboost.im.global.UIUtils;
 import com.entboost.utils.AbDateUtil;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
 public class MessageAdapter extends BaseAdapter {
-
+	
+	private static String LONG_TAG = MessageAdapter.class.getName();
+	
+	//用户自定义消息类型，具体值要求"大于等于"ChatRoomRichMsg.CHATROOMRICHMSG_TYPE_USER_DATA的值
+	/**
+	 * 用户自定义消息类型0，用于发送文本；第三方可根据自己需求进行含义变更
+	 */
+	public final static int UserDataType_0_Text = ChatRoomRichMsg.CHATROOMRICHMSG_TYPE_USER_DATA + 0;
+	/**
+	 * 用户自定义消息类型1，用于发送字节数组；第三方可根据自己需求进行含义变更
+	 */
+	public final static int UserDataType_1_Bytes = ChatRoomRichMsg.CHATROOMRICHMSG_TYPE_USER_DATA + 1;
+	//===更多请自行定义...
+	
+	
 	private Context mContext;
 	// xml转View对象
 	private LayoutInflater mInflater;
@@ -34,12 +54,19 @@ public class MessageAdapter extends BaseAdapter {
 		this.mContext = context;
 		// 用于将xml转为View
 		this.mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		
+		if (list!=null) {
+			Collections.sort(list, new DynamicNewsCompare()); //排序
+		}
 		setList(list);
 	}
 
 	public void setList(List<DynamicNews> list) {
 		this.list.clear();
-		this.list.addAll(list);
+		if (list!=null) {
+			Collections.sort(list, new DynamicNewsCompare()); //排序
+			this.list.addAll(list);
+		}
 	}
 	
 	@Override
@@ -76,7 +103,7 @@ public class MessageAdapter extends BaseAdapter {
 			holder = (ViewHolder) convertView.getTag();
 		}
 
-		// 获取该行的数据
+		// 设置未读数量角标
 		DynamicNews dyn = (DynamicNews) getItem(position);
 		if (dyn.getNoReadNum() == 0) {
 			holder.itemsCount.setVisibility(View.GONE);
@@ -88,14 +115,61 @@ public class MessageAdapter extends BaseAdapter {
 				holder.itemsCount.setText("99+");
 		}
 		
-		holder.itemsTitle.setText(dyn.getTitle());
+		//是否自定义广播消息；subType=[0-99]系统保留，其它由第三方自行定制
+		boolean isCustomBMMessage = (dyn.getType() == DynamicNews.TYPE_BMESSAGE && dyn.getSubType()>=100);
+		//是否用户自定义聊天消息
+		boolean isUserCustomData = ((dyn.getType()==DynamicNews.TYPE_USERCHAT || dyn.getType()==DynamicNews.TYPE_GROUPCHAT) && dyn.getSubType()>=ChatRoomRichMsg.CHATROOMRICHMSG_TYPE_USER_DATA);
+		
+		//显示消息标题
+		if (isCustomBMMessage) { //自定义广播消息
+			//holder.itemsTitle.setText("第三方可自定义标题[subType=" + dyn.getSubType() + "]");
+			holder.itemsTitle.setText(dyn.getContent() /*+ "[subType=" + dyn.getSubType() + "]"*/);
+		} else {
+			holder.itemsTitle.setText(dyn.getTitle());
+		}
+		
+		//显示消息预览
 		if (dyn.getLastRetractMsgId()!=null && dyn.getLastRetractMsgId()>0 && dyn.getMsg_id()!=null && dyn.getLastRetractMsgId()-dyn.getMsg_id()==0)
 			holder.itemsText.setText("[撤回一条消息]");
-		else 
-			holder.itemsText.setText(UIUtils.getTipCharSequence(mContext.getResources(), dyn.getContent(), true));
+		else {
+			//自定义广播消息
+			if (isCustomBMMessage) {
+				//holder.itemsText.setText("第三方可自定义内容");
+				//holder.itemsText.setText(dyn.getContent());
+				holder.itemsText.setText(dyn.getContentText());
+			} else if (isUserCustomData) { //用户自定义聊天消息
+				//用户自定义文本消息的例子
+				if (dyn.getSubType() == MessageAdapter.UserDataType_0_Text) {
+					//通过msgid获取聊天记录
+					if (dyn.getMsg_id()!=null) {
+						ChatRoomRichMsg msg = EntboostCache.getChatMsgByMsgId(dyn.getMsg_id());
+						if (msg!=null && msg.getBinData()!=null) {
+							String text = "";
+							try {
+								text =new String(msg.getBinData(), "utf-8");
+							} catch (UnsupportedEncodingException e) {
+								Log4jLog.e(LONG_TAG, e);
+							}
+							
+							holder.itemsText.setText(text);
+						}
+					}
+				} else if (dyn.getSubType() == MessageAdapter.UserDataType_1_Bytes) {
+					//第三方自行实现
+					holder.itemsText.setText("[图片]");
+				}
+				//其它自定义消息子类型...
+			} else {
+				holder.itemsText.setText(UIUtils.getTipCharSequence(mContext.getResources(), dyn.getContent(), true));
+			}
+		}
+		
+		//显示格式时间
 		holder.itemsTime.setText(AbDateUtil.formatDateStr2Desc(AbDateUtil
 				.getStringByFormat(dyn.getTime(), AbDateUtil.dateFormatYMDHMS), AbDateUtil.dateFormatYMDHMS));
-		if (dyn.getType() == DynamicNews.TYPE_GROUPCHAT) {
+		
+		//显示头像
+		if (dyn.getType() == DynamicNews.TYPE_GROUPCHAT) { //群组聊天
 			//设置部门/群组的头像
 			GroupInfo groupInfo = EbCache.getInstance().getSysDataCache().getDepartmentInfo(dyn.getSender());
 			if (groupInfo==null)
@@ -109,9 +183,15 @@ public class MessageAdapter extends BaseAdapter {
 			} else 
 				holder.itemsIcon.setImageResource(R.drawable.group_head_0);
 		} else if (dyn.getType() == DynamicNews.TYPE_MYMESSAGE || dyn.getType() == DynamicNews.TYPE_BMESSAGE
-				 || dyn.getType() == DynamicNews.TYPE_MYSYSTEMMESSAGE) {
-			holder.itemsIcon.setImageResource(R.drawable.message_head);
-		} else {
+				 || dyn.getType() == DynamicNews.TYPE_MYSYSTEMMESSAGE) { //广播消息和系统消息
+			//自定义广播消息
+			if (isCustomBMMessage) {
+				//根据业务[subType]自行使用定制头像
+				holder.itemsIcon.setImageResource(R.drawable.message_head);
+			} else {
+				holder.itemsIcon.setImageResource(R.drawable.message_head);
+			}
+		} else { //一对一聊天
 			Bitmap img = YIResourceUtils.getHeadBitmap(dyn.getHid());
 			if (img != null) {
 				holder.itemsIcon.setImageBitmap(img);
@@ -119,6 +199,7 @@ public class MessageAdapter extends BaseAdapter {
 				ImageLoader.getInstance().displayImage(dyn.getHeadUrl(), holder.itemsIcon, MyApplication.getInstance().getUserImgOptions());
 			}
 		}
+		
 		return convertView;
 	}
 

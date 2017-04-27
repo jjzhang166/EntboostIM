@@ -77,7 +77,7 @@ public class MemberListActivity extends EbActivity {
 						Intent intent = new Intent(view.getContext(), ChatActivity.class);
 						intent.putExtra(ChatActivity.INTENT_TITLE,
 								memberInfo.getUsername());
-						intent.putExtra(ChatActivity.INTENT_UID,
+						intent.putExtra(ChatActivity.INTENT_TOID,
 								memberInfo.getEmp_uid());
 						startActivity(intent);
 					}

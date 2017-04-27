@@ -1,6 +1,7 @@
 package com.entboost.im.group;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import net.yunim.service.EntboostCache;
@@ -31,6 +32,9 @@ import android.widget.TextView;
 import com.entboost.handler.HandlerToolKit;
 import com.entboost.im.R;
 import com.entboost.im.chat.ChatActivity;
+import com.entboost.im.comparator.DepartmentInfoComparator;
+import com.entboost.im.comparator.MemberInfoComparator;
+import com.entboost.im.global.MyApplication;
 import com.entboost.im.global.UIUtils;
 import com.entboost.im.group.MemberInfoViewHolder;
 import com.entboost.im.group.MemberSelectActivity;
@@ -69,8 +73,18 @@ public class DepAndMemberAdapter extends BaseAdapter {
 
 	public void setMembers(Long groupid) {
 		this.groupMemberInfos.clear();
-		this.groupMemberInfos.addAll(EntboostCache.getNextDepartmentInfos(groupid));
-		this.groupMemberInfos.addAll(EntboostCache.getGroupMemberInfos(groupid));
+		
+		List<DepartmentInfo> depInfos = EntboostCache.getNextDepartmentInfos(groupid);
+		if (depInfos!=null) {
+			Collections.sort(depInfos, new DepartmentInfoComparator()); //排序
+			this.groupMemberInfos.addAll(depInfos);
+		}
+		
+		List<MemberInfo> memberInfos = EntboostCache.getGroupMemberInfos(groupid);
+		if (memberInfos!=null) {
+			Collections.sort(memberInfos, new MemberInfoComparator()); //排序
+			this.groupMemberInfos.addAll(memberInfos);
+		}
 	}
 
 	@Override
@@ -136,7 +150,7 @@ public class DepAndMemberAdapter extends BaseAdapter {
 					holder1.userImg.setImageBitmap(img);
 				}
 			} else {
-				ImageLoader.getInstance().loadImage(memberInfo.getHeadUrl(), new ImageLoadingListener() {
+				ImageLoader.getInstance().loadImage(memberInfo.getHeadUrl(), MyApplication.getInstance().getUserImgOptions(), new ImageLoadingListener() {
 					@Override
 					public void onLoadingStarted(String arg0, View arg1) {
 					}
@@ -282,7 +296,7 @@ public class DepAndMemberAdapter extends BaseAdapter {
 						Intent intent = new Intent(DepAndMemberAdapter.this.mContext, ChatActivity.class);
 						intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 						intent.putExtra(ChatActivity.INTENT_TITLE, group.getDep_name());
-						intent.putExtra(ChatActivity.INTENT_UID, group.getDep_code());
+						intent.putExtra(ChatActivity.INTENT_TOID, group.getDep_code());
 						intent.putExtra(ChatActivity.INTENT_CHATTYPE, ChatActivity.CHATTYPE_GROUP);
 						DepAndMemberAdapter.this.mContext.startActivity(intent);
 					}

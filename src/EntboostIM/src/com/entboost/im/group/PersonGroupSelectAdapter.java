@@ -15,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.entboost.im.R;
+import com.entboost.im.comparator.PersonGroupInfoComparator;
 
 public class PersonGroupSelectAdapter extends BaseAdapter {
 	private Context mContext;
@@ -27,7 +28,7 @@ public class PersonGroupSelectAdapter extends BaseAdapter {
 	
 	public void setInput(List<PersonGroupInfo> groups) {
 		this.groups.clear();
-		Collections.sort(groups);
+		Collections.sort(groups, new PersonGroupInfoComparator());
 		this.groups.addAll(groups);
 	}
 	

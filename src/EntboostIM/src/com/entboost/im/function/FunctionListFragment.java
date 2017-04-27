@@ -39,8 +39,8 @@ public class FunctionListFragment extends EbFragment {
 	}
 
 	@Override
-	public void refreshPage(boolean switchView) {
-		super.refreshPage(switchView);
+	public void refreshPage(boolean switchView, int notifyChangeWhich) {
+		super.refreshPage(switchView, notifyChangeWhich);
 		if(functionAdapter!=null){
 			functionAdapter.setList(EntboostCache.getCommonFuncInfos());
 			functionAdapter.notifyDataSetChanged();

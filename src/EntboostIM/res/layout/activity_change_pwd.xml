@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#eee"
+    android:background="@color/mainPageBG"
     android:gravity="center_horizontal"
     android:orientation="vertical" >
     
@@ -17,7 +17,8 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/editbox" />
+            android:background="@drawable/all_line"
+             /><!-- android:background="@drawable/editbox" -->
 
         <ImageView
             android:id="@+id/changepwd_oldpasswd_img"
@@ -35,10 +36,11 @@
             android:layout_marginLeft="11dip"
             android:layout_toRightOf="@id/changepwd_oldpasswd_img"
             android:background="@null"
-            android:hint="旧密码"
+            android:hint="当前密码"
             android:inputType="textPassword"
             android:singleLine="true"
-            android:textSize="18sp" />
+            android:textColorHint="@color/text_color_hint"
+            android:textSize="14sp" />
     </RelativeLayout>
 
     <RelativeLayout
@@ -53,7 +55,8 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/editbox" />
+            android:background="@drawable/all_line"
+             /> <!-- android:background="@drawable/editbox" -->
 
         <ImageView
             android:id="@+id/changepwd_passwd_img"
@@ -74,7 +77,8 @@
             android:hint="新密码"
             android:inputType="textPassword"
             android:singleLine="true"
-            android:textSize="18sp" />
+            android:textColorHint="@color/text_color_hint"
+            android:textSize="14sp" />
     </RelativeLayout>
 
     <RelativeLayout
@@ -89,7 +93,8 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/editbox" />
+            android:background="@drawable/all_line"
+             /> <!-- android:background="@drawable/editbox" -->
 
         <ImageView
             android:id="@+id/changepwd_confirm_passwd_img"
@@ -110,7 +115,8 @@
             android:hint="确认新密码"
             android:inputType="textPassword"
             android:singleLine="true"
-            android:textSize="18sp" />
+            android:textColorHint="@color/text_color_hint"
+            android:textSize="14sp" />
     </RelativeLayout>
 
     <Button
@@ -121,11 +127,11 @@
         android:layout_alignRight="@id/confirm_pwd_layout"
         android:layout_below="@id/confirm_pwd_layout"
         android:layout_marginTop="17dp"
-        android:background="@drawable/btn_style_green"
-        android:text="保存"
+        android:background="@drawable/btn_style_green1"
+        android:text="提交"
         android:padding="12dp"
-        android:textColor="#ffffff"
-        android:textSize="18sp" />
+        android:textColor="@color/text_color_1"
+        android:textSize="16sp" />
 
     <Button
         android:id="@+id/cancel"
@@ -138,7 +144,7 @@
         android:background="@drawable/btn_style_w"
         android:text="取消"
         android:padding="12dp"
-        android:textColor="#333"
-        android:textSize="18sp" />
+        android:textColor="@color/text_color_2"
+        android:textSize="16sp" />
 
 </RelativeLayout>

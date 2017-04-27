@@ -261,7 +261,7 @@ public class LoginActivity extends EbActivity {
 		}
 		
 		showProgressDialog("努力登录中...");
-		EntboostLC.logon(name, pwd, new LogonAccountListener() {
+		EntboostLC.logon(this, name, pwd, new LogonAccountListener() {
 			@Override
 			public void onFailure(int code, final String errMsg) {
 				HandlerToolKit.runOnMainThreadAsync(new Runnable() {
@@ -345,7 +345,7 @@ public class LoginActivity extends EbActivity {
 	@OnClick(R.id.login_vistor_login_btn)
 	public void vistorLogin(View view) {
 		showProgressDialog("努力登录中...");
-		EntboostLC.logonVisitor(new LogonAccountListener() {
+		EntboostLC.logonVisitor(this, new LogonAccountListener() {
 
 			@Override
 			public void onFailure(int code, final String errMsg) {

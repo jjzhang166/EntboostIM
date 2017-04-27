@@ -1,7 +1,9 @@
 package com.entboost.im.group;
 
+import net.yunim.service.EntboostCM;
 import net.yunim.service.EntboostCache;
 import net.yunim.service.EntboostUM;
+import net.yunim.service.constants.EB_MANAGER_LEVEL;
 import net.yunim.service.entity.AppAccountInfo;
 import net.yunim.service.entity.DepartmentInfo;
 import net.yunim.service.entity.GroupInfo;
@@ -10,11 +12,14 @@ import net.yunim.service.entity.PersonGroupInfo;
 import net.yunim.service.listener.DelMemberListener;
 import net.yunim.service.listener.EditContactListener;
 import net.yunim.service.listener.EditInfoListener;
+import net.yunim.service.listener.EditMemberListener;
+import net.yunim.utils.YIFileUtils;
 import net.yunim.utils.YIResourceUtils;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -23,14 +28,20 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.entboost.Log4jLog;
 import com.entboost.handler.HandlerToolKit;
 import com.entboost.im.R;
 import com.entboost.im.base.EbActivity;
 import com.entboost.im.chat.ChatActivity;
+import com.entboost.im.chat.ForbidMinutesListActivity;
+import com.entboost.im.global.MyApplication;
 import com.entboost.ui.base.view.titlebar.AbTitleBar;
+import com.entboost.ui.utils.AbBitmapUtils;
+import com.entboost.utils.AbFileUtil;
 import com.lidroid.xutils.ViewUtils;
 import com.lidroid.xutils.view.annotation.ViewInject;
 import com.lidroid.xutils.view.annotation.event.OnClick;
+import com.nostra13.universalimageloader.core.ImageLoader;
 
 public class MemberInfoActivity extends EbActivity {
 
@@ -61,6 +72,8 @@ public class MemberInfoActivity extends EbActivity {
 	private Button member_send_btn;
 	@ViewInject(R.id.member_set_default)
 	private Button member_set_default;
+	@ViewInject(R.id.member_forbid)
+	private Button member_forbid;
 	@ViewInject(R.id.member_del)
 	private Button member_del;
 	@ViewInject(R.id.member_add_friend)
@@ -83,9 +96,7 @@ public class MemberInfoActivity extends EbActivity {
 		selfFlag = getIntent().getBooleanExtra("selfFlag", false);
 	}
 
-	@Override
-	protected void onResume() {
-		super.onResume();
+	private void renderView() {
 		// 1、首先根据传入的成员编号获取群组成员对象
 		memberInfo = EntboostCache.getMemberByCode(memberCode);
 		// 2、如果根据传入的成员编号获取群组成员对象为空，那么直接从传入的数据中获取群组成员
@@ -93,7 +104,7 @@ public class MemberInfoActivity extends EbActivity {
 			memberInfo = (MemberInfo) getIntent().getSerializableExtra("memberInfo");
 		if (memberInfo == null)
 			return;
-					
+		
 		GroupInfo group = EntboostCache.getGroup(memberInfo.getDep_code());
 		if (group == null)
 			return;
@@ -109,12 +120,19 @@ public class MemberInfoActivity extends EbActivity {
 		member_dep.setText(group.getDep_name());
 		member_job.setText(memberInfo.getJob_title());
 		
+		member_forbid.setTag(memberInfo.getForbid_minutes()>=0 && (memberInfo.getManager_level()&EB_MANAGER_LEVEL.EB_LEVEL_FORBID_SPEECH.getValue()) == EB_MANAGER_LEVEL.EB_LEVEL_FORBID_SPEECH.getValue());
+		if ((Boolean)member_forbid.getTag()==true) {
+			member_forbid.setText("解除禁言");
+		} else {
+			member_forbid.setText("禁言");
+		}
+		
 		// 3-1、设置成员头像，如果没有则设置为默认头像
 		Bitmap img = YIResourceUtils.getHeadBitmap(memberInfo.getH_r_id());
 		if (img != null) {
 			member_head.setImageBitmap(img);
 		} else {
-			member_head.setImageResource(R.drawable.default_user);
+			ImageLoader.getInstance().displayImage(memberInfo.getHeadUrl(), member_head, MyApplication.getInstance().getUserImgOptions());
 		}
 		
 		// 3-2、判断成员所在的群组是个人群组或部门，区别展示不同的标题，职位是否显示等
@@ -146,12 +164,23 @@ public class MemberInfoActivity extends EbActivity {
 			
 			// 判断管理权限
 			Long myUid = EntboostCache.getUid();
-			if (group.getCreate_uid() - myUid == 0 || EntboostCache.getEnterpriseInfo().getCreate_uid() - myUid == 0)
+			if (group.getCreate_uid() - myUid == 0 || (group instanceof DepartmentInfo && EntboostCache.getEnterpriseInfo().getCreate_uid() - myUid == 0)) {
 				member_del.setVisibility(View.VISIBLE);
-			else
+				member_forbid.setVisibility(View.VISIBLE);
+			} else
 				member_del.setVisibility(View.GONE);
 			
-			member_del.setText("移除成员");
+			if (group.getMy_emp_id()>0) {
+				MemberInfo myMember = EntboostCache.getMemberByCode(group.getMy_emp_id());
+				if (myMember!=null) {
+					if ((myMember.getManager_level()&EB_MANAGER_LEVEL.EB_LEVEL_DEP_ADMIN.getValue()) == EB_MANAGER_LEVEL.EB_LEVEL_DEP_ADMIN.getValue()) {
+						member_del.setVisibility(View.VISIBLE);
+						member_forbid.setVisibility(View.VISIBLE);
+					}
+				}
+			}
+			
+			member_del.setText("移除");
 			
 			AppAccountInfo appInfo = EntboostCache.getAppInfo();
 			if ((appInfo.getSystem_setting() & AppAccountInfo.SYSTEM_SETTING_VALUE_AUTH_CONTACT) == AppAccountInfo.SYSTEM_SETTING_VALUE_AUTH_CONTACT) {
@@ -165,7 +194,13 @@ public class MemberInfoActivity extends EbActivity {
 				member_add_contact.setVisibility(View.GONE);
 				member_add_friend.setVisibility(View.GONE);
 			}
-		}
+		}		
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		renderView();
 	}
 
 	@OnClick(R.id.member_head)
@@ -242,7 +277,73 @@ public class MemberInfoActivity extends EbActivity {
 	}
 
 	private String progressMsg = null;
+	/**
+	 * 选中禁言时长请求代码
+	 */
+	private final int REQUEST_CODE_FORBID_MINUTES = 1;
+	
+	@OnClick(R.id.member_forbid)
+	public void forbidMember(final View view) {
+		if (memberInfo != null) {
+			int forbid_minutes = ((Boolean)member_forbid.getTag()==true)?-1:0;
+			//选择禁言时长
+			if (forbid_minutes==0) {
+				Intent intent = new Intent(this, ForbidMinutesListActivity.class);
+				intent.putExtra(ForbidMinutesListActivity.INTENT_SELECTED_FORBID_MINUTES_INPUT, memberInfo.getForbid_minutes());
+				startActivityForResult(intent, REQUEST_CODE_FORBID_MINUTES);
+			} else {
+				forbidMember(forbid_minutes);
+			}
+		}
+	}
+	
+	/**
+	 * 执行禁言或解除禁言
+	 * @param forbid_minutes
+	 */
+	private void forbidMember(int forbid_minutes) {
+		progressMsg = forbid_minutes==-1?"正在执行解除禁言":"正在执行禁言成员";
+		showProgressDialog(progressMsg);
+		
+		EntboostUM.forbidMember(memberInfo.getDep_code(), memberInfo.getEmp_code(), memberInfo.getEmp_uid(), null, forbid_minutes, new EditMemberListener() {
+			@Override
+			public void onFailure(int code, final String errMsg) {
+				HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+					@Override
+					public void run() {
+						pageInfo.showError(errMsg);
+						removeProgressDialog();
+					}
+				});
+			}
 
+			@Override
+			public void onEditMemberSuccess(Long emp_code, Long emp_uid) {
+				HandlerToolKit.runOnMainThreadAsync(new Runnable() {
+					@Override
+					public void run() {
+						removeProgressDialog();
+						renderView();
+					}
+				});
+			}
+		});
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (resultCode != RESULT_OK) {
+			return;
+		}
+		
+		switch(requestCode) {
+		case REQUEST_CODE_FORBID_MINUTES: //选取目标对象，并执行转发消息
+			int forbidMinutes = data.getIntExtra(ForbidMinutesListActivity.INTENT_SELECTED_FORBID_MINUTES_OUTPUT, 0);
+			forbidMember(forbidMinutes);
+			break;
+		}
+	}	
+	
 	@OnClick(R.id.member_del)
 	public void delMember(View view) {
 		if (memberInfo != null) {
@@ -300,7 +401,7 @@ public class MemberInfoActivity extends EbActivity {
 		// 打开与成员的会话界面
 		Intent intent = new Intent(this, ChatActivity.class);
 		intent.putExtra(ChatActivity.INTENT_TITLE, memberInfo.getUsername());
-		intent.putExtra(ChatActivity.INTENT_UID, memberInfo.getEmp_uid());
+		intent.putExtra(ChatActivity.INTENT_TOID, memberInfo.getEmp_uid());
 		this.startActivity(intent);
 	}
 

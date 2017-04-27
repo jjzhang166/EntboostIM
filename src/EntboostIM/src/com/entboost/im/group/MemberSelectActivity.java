@@ -2,6 +2,7 @@ package com.entboost.im.group;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +38,10 @@ import com.entboost.Log4jLog;
 import com.entboost.handler.HandlerToolKit;
 import com.entboost.im.R;
 import com.entboost.im.base.EbActivity;
+import com.entboost.im.comparator.DepartmentInfoComparator;
+import com.entboost.im.comparator.PersonGroupInfoComparator;
 import com.entboost.im.contact.ContactAdapter;
+import com.entboost.im.contact.FriendMainFragment;
 import com.entboost.ui.base.view.hlistview.HorizontalListView;
 
 public class MemberSelectActivity extends EbActivity implements SelectedMemberListener, Serializable {
@@ -51,11 +55,12 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 	
 	private ContactAdapter friendAdapter;
 
-	private int selectPage = 0;
-	private static int SELECTPAGE_CONTACT = 0;
-	private static int SELECTPAGE_GROUP = 1;
-	private static int SELECTPAGE_MYDEPARTMENT = 2;
-	private static int SELECTPAGE_ENT = 3;
+	private static int SELECTPAGE_CONTACT = FriendMainFragment.SELECTPAGE_CONTACT;
+	private static int SELECTPAGE_GROUP = FriendMainFragment.SELECTPAGE_GROUP;
+	private static int SELECTPAGE_MYDEPARTMENT = FriendMainFragment.SELECTPAGE_MYDEPARTMENT;
+	private static int SELECTPAGE_ENT = FriendMainFragment.SELECTPAGE_ENT;
+	
+	private int selectPage = SELECTPAGE_MYDEPARTMENT;
 
 	private View layout_contact;
 	private View layout_group;
@@ -374,21 +379,33 @@ public class MemberSelectActivity extends EbActivity implements SelectedMemberLi
 		} else {
 			text_listname.setText("企业架构");
 		}
-		entAdapter.setInput(EntboostCache.getRootDepartmentInfos());
+		
+		List<DepartmentInfo> rootDepInfos = EntboostCache.getRootDepartmentInfos();
+		Collections.sort(rootDepInfos, new DepartmentInfoComparator()); //排序
+		entAdapter.setInput(rootDepInfos);
+		
 		entAdapter.notifyDataSetChanged();
 		entlistView.setVisibility(View.VISIBLE);
 	}
 
 	public void notifyGroupChanged() {
 		text_listname.setText("个人群组");
-		groupAdapter.setInput(EntboostCache.getPersonGroups());
+		
+		List<PersonGroupInfo> groups = EntboostCache.getPersonGroups();
+		Collections.sort(groups, new PersonGroupInfoComparator()); //排序
+		groupAdapter.setInput(groups);
+		
 		groupAdapter.notifyDataSetChanged();
 		grouplistView.setVisibility(View.VISIBLE);
 	}
 
 	public void notifyDepartmentChanged() {
 		text_listname.setText("我的部门");
-		departmentAdapter.setInput(EntboostCache.getMyDepartments());
+		
+		List<DepartmentInfo> deps = EntboostCache.getMyDepartments();
+		Collections.sort(deps, new DepartmentInfoComparator()); //排序
+		departmentAdapter.setInput(deps);
+		
 		departmentAdapter.notifyDataSetChanged();
 		departmentlistView.setVisibility(View.VISIBLE);
 	}

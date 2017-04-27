@@ -9,6 +9,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
 
+import com.entboost.Log4jLog;
 import com.entboost.handler.HandlerToolKit;
 import com.entboost.im.R;
 import com.entboost.im.base.EbActivity;
@@ -16,6 +17,8 @@ import com.entboost.im.global.UIUtils;
 
 public class SelectHeadImgActivity extends EbActivity {
 
+	private static String LONG_TAG = SelectHeadImgActivity.class.getName();
+	
 	private GridView headGriView;
 	private HeadImageAdapter headImageAdapter;
 	private long memberCode;
@@ -37,7 +40,9 @@ public class SelectHeadImgActivity extends EbActivity {
 				showProgressDialog("正在设置头像");
 				EntboostUM.setUserHead(head.getRes_id(), memberCode, new SetHeadListener() {
 					@Override
-					public void onFailure(int code, String arg0) {
+					public void onFailure(int code, String errMsg) {
+						Log4jLog.e(LONG_TAG, errMsg + "(" + code + ")");
+						
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {

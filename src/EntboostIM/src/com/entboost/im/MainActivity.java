@@ -79,20 +79,44 @@ public class MainActivity extends EbMainActivity {
 //		i.addCategory(Intent.CATEGORY_HOME);
 //		startActivity(i);
 	}
-
+	
 	@Override
-	public void online_another() {
+	public void online_another(int type) {
+		if (type==0)
+			goBackLoginView("您的帐号已经在其它地方登录！");
+		else
+			goBackLoginView("您的密码已被修改，请重新登录！");
+	}
+	
+	@Override
+	public void onInvalidAccPassword() {
+		goBackLoginView("密码错误，请重新登录!");
+	}
+	
+	//用户登出并跳转到登录界面
+	private void goBackLoginView(String message) {
+		//返回到主界面
+		MyActivityManager.getInstance().popToActivity(MainActivity.class.getName());
+		
 		AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this);
-		ab.setTitle("提示");
-		ab.setMessage("您的帐号已经在其它地方登录！");
 		ab.setIcon(android.R.drawable.ic_dialog_alert);
+		ab.setTitle("提示");
+		ab.setMessage(message);
 		
 		ab.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				dialog.dismiss();
-				EntboostLC.logout();
 				finish();
+				
+				//执行用户登出
+				EntboostLC.logout();
+				MyApplication.getInstance().setLogin(false);
+				
+				//退出所有Activity
+				MyActivityManager.getInstance().clearAllActivity();
+				
+				//跳转到登录界面
 				Intent intent = new Intent(MainActivity.this, LoginActivity.class);
 				startActivity(intent);
 			}
@@ -104,12 +128,39 @@ public class MainActivity extends EbMainActivity {
 	@Override
 	public void onUserStateChange(Long uid) {
 		if (friendMainFragment != null) {
-			friendMainFragment.refreshPage(false);
+			friendMainFragment.refreshPage(false, FriendMainFragment.NotifyChangeAll);
 		}
 		super.onUserStateChange(uid);
 	}
 	
-	public static String EXTRA_BUNDLE = "main_activity_extra_bundle";
+	@Override
+	public void onUserHeadChange(Long uid, Long resId, String cmServer, String httpServer, String md5) {
+		//更新聊天会话列表界面
+		if (messageListFragment != null) {
+			messageListFragment.refreshPage();
+		}
+		//更新联系人界面
+		if (friendMainFragment != null) {
+			friendMainFragment.refreshPage(false, FriendMainFragment.NotifyChangeAll);
+		}
+		//刷新显示当前登录用户的头像
+		if (settingFragment!=null && EntboostCache.getUser().getUid()-uid==0) {
+			settingFragment.refreshUserHead();
+		}
+		super.onUserHeadChange(uid, resId, cmServer, httpServer, md5);
+	}
+
+	@Override
+	public void onLoadContactsLineState() {
+		if (friendMainFragment != null) {
+			friendMainFragment.refreshPage(false, FriendMainFragment.NotifyChangeContact);
+		}
+		super.onLoadContactsLineState();
+	}
+
+	public static final String EXTRA_BUNDLE = "main_activity_extra_bundle";
+	
+	public static final String INTENT_DYNAMIC_NEWS_TYPE = "dynamic_news_type";
 	
 	// 处理接收消息通知事件
 	public static void handleReceiveDynamicNews(Context context, DynamicNews news) {
@@ -130,7 +181,7 @@ public class MainActivity extends EbMainActivity {
 			boolean typeMatched = true; //是否发送状态栏通知
 			Intent intent = new Intent(context, NotificationReceiver.class);
 			Bundle bundle = new Bundle();
-			bundle.putInt(DynamicNews.DYNAMIC_NEWS_TYPE, news.getType());
+			bundle.putInt(INTENT_DYNAMIC_NEWS_TYPE, news.getType());
 			
 			//不同的消息类型
 			switch(news.getType()) {
@@ -140,7 +191,7 @@ public class MainActivity extends EbMainActivity {
 					bundle.putInt(ChatActivity.INTENT_CHATTYPE, ChatActivity.CHATTYPE_GROUP);
 				}
 				bundle.putString(ChatActivity.INTENT_TITLE, news.getTitle());
-				bundle.putLong(ChatActivity.INTENT_UID, news.getSender());
+				bundle.putLong(ChatActivity.INTENT_TOID, news.getSender());
 				break;
 			case DynamicNews.TYPE_CALL:
 				break;
@@ -180,7 +231,7 @@ public class MainActivity extends EbMainActivity {
 		Bundle bundle = getIntent().getBundleExtra(EXTRA_BUNDLE);
 		
         if(bundle != null) {
-        	int dynamicNewsType = bundle.getInt(DynamicNews.DYNAMIC_NEWS_TYPE, -1);
+        	int dynamicNewsType = bundle.getInt(INTENT_DYNAMIC_NEWS_TYPE, -1);
         	if (dynamicNewsType>-1) {
         		Intent intent = null;
         		
@@ -195,7 +246,7 @@ public class MainActivity extends EbMainActivity {
 						intent.putExtra(ChatActivity.INTENT_CHATTYPE, bundle.getInt(ChatActivity.INTENT_CHATTYPE));
 					}
 					intent.putExtra(ChatActivity.INTENT_TITLE, bundle.getString(ChatActivity.INTENT_TITLE));
-					intent.putExtra(ChatActivity.INTENT_UID, bundle.getLong(ChatActivity.INTENT_UID));
+					intent.putExtra(ChatActivity.INTENT_TOID, bundle.getLong(ChatActivity.INTENT_TOID));
 					break;
 				case DynamicNews.TYPE_CALL:
 					intent = new Intent(this, CallListActivity.class);
@@ -501,7 +552,8 @@ public class MainActivity extends EbMainActivity {
 										public void run() {
 											removeProgressDialog();
 											if (friendMainFragment != null) {
-												friendMainFragment.refreshPage(true);
+												friendMainFragment.refreshPage(false, FriendMainFragment.NotifyChangeContact);
+												//friendMainFragment.refreshPage(true);
 											}
 										}
 									});
@@ -613,7 +665,7 @@ public class MainActivity extends EbMainActivity {
 				Intent intent = new Intent(this, ChatActivity.class);
 				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 				intent.putExtra(ChatActivity.INTENT_TITLE, group.getDep_name());
-				intent.putExtra(ChatActivity.INTENT_UID, group.getDep_code());
+				intent.putExtra(ChatActivity.INTENT_TOID, group.getDep_code());
 				intent.putExtra(ChatActivity.INTENT_CHATTYPE, ChatActivity.CHATTYPE_GROUP);
 				startActivity(intent);
 			}

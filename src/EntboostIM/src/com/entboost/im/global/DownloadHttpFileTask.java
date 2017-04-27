@@ -15,8 +15,6 @@ import com.entboost.utils.AbFileUtil;
 
 /**
  * 自定义异步下载Http文件类，继承AsyncTask类
- * @author nk
- *
  */
 public class DownloadHttpFileTask extends AsyncTask<String, Integer, Boolean> {
 	private static String LONG_TAG = DownloadHttpFileTask.class.getName();

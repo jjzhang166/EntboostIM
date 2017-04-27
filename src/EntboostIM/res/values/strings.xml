@@ -12,7 +12,7 @@
     <string name="title_activity_setting">SettingActivity</string>
     <string name="title_activity_change_pwd">修改密码</string>
     <string name="register_activity_serverhref"><a href="www.entboost.com">《恩布互联服务许可协议》</a></string>
-    <string name="title_activity_contact_name_edit">联系人名称修改</string>
+    <string name="title_activity_contact_text_edit">编辑文本</string>
     <string name="title_activity_contact_description">联系人备注修改</string>
     <string name="title_activity_department">企业组织结构</string>
     <string name="title_activity_department_info">群组信息</string>
@@ -48,6 +48,7 @@
     <string name="title_activity_select_contact_group">管理分组</string>
     <string name="title_activity_department_list">DepartmentListActivity</string>
     <string name="title_activity_file_list">文件目录</string>
+    <string name="title_activity_forbid_minutes_list">禁言限制</string>
     <string name="title_activity_app_ver">版本信息</string>
     <string name="title_activity_notification_setting">通知提醒设置</string>
     <string name="title_activity_edit_group_name">编辑名称</string>
@@ -68,6 +69,7 @@
     <string name="title_activity_info_addr_edit">详细地址</string>
     <string name="title_activity_info_huawei_resolve_error">华为移动服务</string>
     <string name="title_activity_info_check_version">检查版本</string>
+    <string name="title_activity_info_security_setting">隐私与安全</string>
 
     <!-- 华为Push 消息成功率统计： 通道将消息转发给SDK后，SDK通知通道消息已接收到 -->
     <string name="hwpush_ability_value" translatable="false">successRateAnalytics</string>

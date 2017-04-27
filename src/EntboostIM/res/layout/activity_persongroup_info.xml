@@ -274,16 +274,17 @@
             android:layout_marginTop="20dp"
             android:background="@drawable/bottom_top_line1"
             android:orientation="horizontal"
-            android:padding="10dp" >
+            android:padding="10dp"
+            android:gravity="center" >
 
             <Button
                 android:id="@+id/persongroup_send_btn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"
+                android:layout_marginRight="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/btn_style_green1"
-                android:padding="10dp"
+                android:padding="8dp"
                 android:text="发送消息"
                 android:textColor="@color/white"
                 android:textSize="14sp" />
@@ -292,22 +293,35 @@
                 android:id="@+id/persongroup_usermanager"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"
+                android:layout_marginRight="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/btn_style_green1"
-                android:padding="10dp"
+                android:padding="8dp"
                 android:text="邀请成员"
                 android:textColor="@color/white"
                 android:textSize="14sp"
                 android:visibility="gone" />
-
+            <Button
+                android:id="@+id/persongroup_forbid_btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/btn_style_w"
+                android:padding="8dp"
+                android:text="禁言"
+                android:textColor="@drawable/btn_text_color_2"
+                android:textSize="14sp" 
+                android:visibility="gone"/>
+            
             <Button
                 android:id="@+id/persongroup_del_btn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginRight="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/btn_style_w"
-                android:padding="10dp"
+                android:padding="8dp"
                 android:text="解散群组"
                 android:textColor="@drawable/btn_text_color_2"
                 android:textSize="14sp" 
@@ -317,9 +331,10 @@
                 android:id="@+id/persongroup_out_btn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginRight="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/btn_style_w"
-                android:padding="10dp"
+                android:padding="8dp"
                 android:text="退出群组"
                 android:textColor="@drawable/btn_text_color_2"
                 android:textSize="14sp" 

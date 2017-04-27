@@ -20,9 +20,7 @@ import com.entboost.global.AbConstant;
 import com.entboost.im.R;
 import com.entboost.im.base.EbFragment;
 import com.entboost.im.function.FunctionMainActivity;
-import com.entboost.im.global.AppUtils;
 import com.entboost.im.global.MyApplication;
-import com.entboost.im.global.VersionUtils;
 import com.entboost.im.user.LoginActivity;
 import com.entboost.im.user.UserInfoActivity;
 import com.entboost.ui.base.activity.MyActivityManager;
@@ -37,18 +35,31 @@ public class SettingFragment extends EbFragment {
 	public void onResume() {
 		super.onResume();
 		
+		refreshUserHead();
+	}
+	
+	/**
+	 * 刷新用户头像
+	 */
+	public void refreshUserHead() {
 		AccountInfo user = EntboostCache.getUser();
+		
 		// 当前用户名称
-		userText.setText(user.getUsername());
+		if (userText!=null)
+			userText.setText(user.getUsername());
+		
 		// 当前用户默认名片头像
-		Bitmap img = YIResourceUtils.getHeadBitmap(user.getHead_rid());
-		if (img != null) {
-			userHead.setImageBitmap(img);
-		} else {
-			ImageLoader.getInstance().displayImage(user.getHeadUrl(), userHead, MyApplication.getInstance().getUserImgOptions());
+		if (userHead!=null) {
+			Bitmap img = YIResourceUtils.getHeadBitmap(user.getHead_rid());
+			if (img != null) {
+				userHead.setImageBitmap(img);
+			} else {
+				ImageLoader.getInstance().displayImage(user.getHeadUrl(), userHead, MyApplication.getInstance().getUserImgOptions());
+			}
 		}
 	}
 	
+	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = onCreateEbView(R.layout.fragment_setting, inflater, container);
 		
@@ -99,15 +110,15 @@ public class SettingFragment extends EbFragment {
 			});
 		}
 		
-		/*
 		//私隐与安全
 		view.findViewById(R.id.s_layout).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				UIUtils.showToast(activity, "隐私与安全正在建设中...");
+				Intent intent = new Intent(activity, SecuritySettingActivity.class);
+				startActivity(intent);
 			}
 		});
-		
+		/*
 		//聊天对话设置
 		view.findViewById(R.id.chat_layout).setOnClickListener(new OnClickListener() {
 			@Override
@@ -132,6 +143,9 @@ public class SettingFragment extends EbFragment {
 						
 						activity.getBottomDialog().cancel();
 						activity.finish();
+						
+						//退出所有Activity
+						MyActivityManager.getInstance().clearAllActivity();
 						Intent intent = new Intent(activity, LoginActivity.class);
 						startActivity(intent);
 						

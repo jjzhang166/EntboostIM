@@ -1,13 +1,11 @@
 package com.entboost.im.function;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
 import net.yunim.service.entity.FuncInfo;
 import net.yunim.utils.YIResourceUtils;
-
-import org.apache.commons.lang3.StringUtils;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.view.LayoutInflater;
@@ -18,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.entboost.im.R;
+import com.entboost.im.comparator.FuncInfoComparator;
 import com.entboost.im.global.MyApplication;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
@@ -28,13 +27,20 @@ public class FunctionAdapter extends BaseAdapter {
 
 	public FunctionAdapter(Context context, List<FuncInfo> list) {
 		this.mContext = context;
-		// 用于将xml转为View
-		this.list.addAll(list);
+		
+		if (list!=null) {
+			Collections.sort(list, new FuncInfoComparator()); //排序
+			this.list.addAll(list);
+		}
 	}
 
 	public void setList(List<FuncInfo> list) {
 		this.list.clear();
-		this.list.addAll(list);
+		
+		if (list!=null) {
+			Collections.sort(list, new FuncInfoComparator()); //排序
+			this.list.addAll(list);
+		}
 	}
 
 	@Override

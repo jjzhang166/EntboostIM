@@ -227,9 +227,15 @@ public class EbActivity extends AbActivity implements EntboostIMListenerInterfac
 	}
 
 	@Override
-	public void online_another() {
+	public void online_another(int type) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public void onInvalidAccPassword() {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
@@ -246,6 +252,19 @@ public class EbActivity extends AbActivity implements EntboostIMListenerInterfac
 
 	@Override
 	public void onUpdateMember(Long uid, Long empid, Long depCode) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onForbidMember(Long fromUid, Long uid, Long empid,
+			Long depCode, int forbidMinutes) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onForbidGroup(Long fromUid, Long depCode, int forbidMinutes) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -312,6 +331,18 @@ public class EbActivity extends AbActivity implements EntboostIMListenerInterfac
 
 	@Override
 	public void onDynamicNewsChanged(Long otherSideId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onUserHeadChange(Long uid, Long resId, String cmServer, String httpServer, String md5) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onLoadContactsLineState() {
 		// TODO Auto-generated method stub
 		
 	}

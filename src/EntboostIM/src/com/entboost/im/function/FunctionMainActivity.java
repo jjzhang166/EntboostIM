@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import net.yunim.service.EntboostCache;
 import net.yunim.service.EntboostUM;
 import net.yunim.service.entity.CardInfo;
 import net.yunim.service.entity.FnavInfo;
@@ -13,6 +14,7 @@ import net.yunim.service.entity.GroupInfo;
 import net.yunim.service.listener.FnavArgsListener;
 import net.yunim.service.listener.LoadFnavListener;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -35,6 +37,7 @@ import com.entboost.im.R;
 import com.entboost.im.base.EbActivity;
 import com.entboost.im.chat.ChatActivity;
 import com.entboost.im.global.UIUtils;
+import com.entboost.ui.base.activity.MyActivityManager;
 import com.entboost.ui.base.view.titlebar.AbTitleBar;
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -97,6 +100,7 @@ public class FunctionMainActivity extends EbActivity {
 
 			@Override
 			public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+				removeProgressDialog();
 				UIUtils.showToast(FunctionMainActivity.this, "无法打开扩展应用，请检查网络是否通畅！");
 				finish();
 			}
@@ -125,17 +129,25 @@ public class FunctionMainActivity extends EbActivity {
 					}					
 					
 					@Override
-					public void send_group_success(final Long depCode, final GroupInfo group) {
+					public void call_group(final Long depCode, final GroupInfo group) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {
+								//退出已经弹出的聊天窗口
+								Activity existActivity =MyActivityManager.getInstance().popToActivity(ChatActivity.class.getName());
+								if (existActivity!=null)
+									MyActivityManager.getInstance().popOneActivity(existActivity);
+								
+								//关闭进度条								
 								removeProgressDialog();
+								
+								//进入新的聊天窗口
 								Intent intent = new Intent(FunctionMainActivity.this, ChatActivity.class);
 								intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
 										| Intent.FLAG_ACTIVITY_SINGLE_TOP
 										| Intent.FLAG_ACTIVITY_CLEAR_TOP);
 								intent.putExtra(ChatActivity.INTENT_TITLE, group.getDep_name());
-								intent.putExtra(ChatActivity.INTENT_UID, depCode);
+								intent.putExtra(ChatActivity.INTENT_TOID, depCode);
 								intent.putExtra(ChatActivity.INTENT_CHATTYPE, ChatActivity.CHATTYPE_GROUP);
 								FunctionMainActivity.this.startActivity(intent);
 							}
@@ -143,24 +155,32 @@ public class FunctionMainActivity extends EbActivity {
 					}
 
 					@Override
-					public void send_account_success(final Long uid, final CardInfo cardInfo) {
+					public void call_account(final Long uid, final CardInfo cardInfo) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {
+								//退出已经弹出的聊天窗口
+								Activity existActivity =MyActivityManager.getInstance().popToActivity(ChatActivity.class.getName());
+								if (existActivity!=null)
+									MyActivityManager.getInstance().popOneActivity(existActivity);
+								
+								//关闭进度条
 								removeProgressDialog();
+								
+								//进入新的聊天窗口
 								Intent intent = new Intent(FunctionMainActivity.this, ChatActivity.class);
 								intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
 										| Intent.FLAG_ACTIVITY_SINGLE_TOP
 										| Intent.FLAG_ACTIVITY_CLEAR_TOP);
 								intent.putExtra(ChatActivity.INTENT_TITLE, cardInfo.getNa());
-								intent.putExtra(ChatActivity.INTENT_UID, uid);
+								intent.putExtra(ChatActivity.INTENT_TOID, uid);
 								FunctionMainActivity.this.startActivity(intent);
 							}
 						});
 					}
 
 					@Override
-					public void download_resource(int type, long resId) {
+					public void download_resource(int type, long resId, String fileName) {
 						//关闭界面并返回下载资源文件的选择结果
 						Intent intent = getIntent();
 						intent.putExtra("resId", resId);
@@ -168,6 +188,16 @@ public class FunctionMainActivity extends EbActivity {
 						
 						setResult(RESULT_OK, intent);
 						FunctionMainActivity.this.finish();
+					}
+
+					@Override
+					public void open_subid(long subid, boolean newWindow, String otherParams) {
+						FuncInfo funcInfo = EntboostCache.getFuncInfo(subid);
+						if (funcInfo!=null) {
+							Intent intent = new Intent(FunctionMainActivity.this, FunctionMainActivity.class);
+							intent.putExtra("funcInfo", funcInfo);
+							startActivity(intent);
+						}
 					}
 
 					@Override

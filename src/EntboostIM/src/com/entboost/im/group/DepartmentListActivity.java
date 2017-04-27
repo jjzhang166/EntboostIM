@@ -107,7 +107,7 @@ public class DepartmentListActivity extends EbActivity {
 							} else {
 								Intent intent = new Intent(DepartmentListActivity.this, ChatActivity.class);
 								intent.putExtra(ChatActivity.INTENT_TITLE, memberInfo.getUsername());
-								intent.putExtra(ChatActivity.INTENT_UID, memberInfo.getEmp_uid());
+								intent.putExtra(ChatActivity.INTENT_TOID, memberInfo.getEmp_uid());
 								startActivity(intent);
 							}
 						} else if (obj instanceof DepartmentInfo) {

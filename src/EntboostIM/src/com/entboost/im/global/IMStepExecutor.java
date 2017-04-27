@@ -83,7 +83,7 @@ public class IMStepExecutor {
 			}
 		} else {
 			// 登录当前的默认用户到Entboost系统，默认用户是最后一次登录的用户
-			EntboostLC.logon(new LogonAccountListener() {
+			EntboostLC.logon(context, new LogonAccountListener() {
 				@Override
 				public void onFailure(int code, String errMsg) {
 					if (isInInterface()) {

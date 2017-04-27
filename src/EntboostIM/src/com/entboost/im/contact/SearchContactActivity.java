@@ -89,7 +89,7 @@ public class SearchContactActivity extends EbActivity {
 					Intent intent = new Intent(SearchContactActivity.this,
 							ChatActivity.class);
 					intent.putExtra(ChatActivity.INTENT_TITLE, info.getName());
-					intent.putExtra(ChatActivity.INTENT_UID, info.getUid());
+					intent.putExtra(ChatActivity.INTENT_TOID, info.getUid());
 					startActivity(intent);
 				}
 			}

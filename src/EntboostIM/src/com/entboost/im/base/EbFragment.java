@@ -17,7 +17,12 @@ public class EbFragment extends Fragment {
 		}
 	}
 	
-	public void refreshPage(boolean switchView) {
+	/**
+	 * 刷新分页面
+	 * @param switchView 是否切换页面
+	 * @param notifyChangeWhich 通知哪个分页面刷新；当switchView=true无效
+	 */
+	public void refreshPage(boolean switchView, int notifyChangeWhich) {
 		if (switchView)
 			hide();
 	};

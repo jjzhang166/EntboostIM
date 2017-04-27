@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.entboost.im"
     android:versionCode="1"
-    android:versionName="1.5.3.286" >
+    android:versionName="1.6.0.313" >
 
     <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="22" />
 	
@@ -59,7 +59,7 @@
         <!-- 华为Push使用的APPID，应根据自己的APP到华为官网申请 -->
         <meta-data
             android:name="com.huawei.hms.client.appid"
-            android:value="33333" />
+            android:value="11111" />
         <!-- 华为Push(华为移动服务)升级provider, 向安装器提供"content://<package.name>.hsf.update.provider/update/hms/HwMobileService.apk" -->
         <provider
             android:name="com.huawei.hms.update.provider.UpdateProvider"
@@ -227,10 +227,10 @@
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.entboost.im.contact.ContactNameEditActivity"
-            android:label="@string/title_activity_contact_name_edit"
+            android:name="com.entboost.im.contact.ContactTextEditActivity"
+            android:label="@string/title_activity_contact_text_edit"
             android:screenOrientation="portrait" >
-        </activity>
+        </activity>     
         <activity
             android:name="com.entboost.im.contact.ContactDescriptionActivity"
             android:label="@string/title_activity_contact_description"
@@ -313,7 +313,7 @@
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.entboost.im.chat.OnlieChatMsgActivity"
+            android:name="com.entboost.im.chat.OnlineChatMsgActivity"
             android:label="@string/title_activity_onlie_chat_msg"
             android:screenOrientation="portrait" >
         </activity>
@@ -345,6 +345,11 @@
         <activity
             android:name="com.entboost.im.chat.FileListActivity"
             android:label="@string/title_activity_file_list"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.chat.ForbidMinutesListActivity"
+            android:label="@string/title_activity_forbid_minutes_list"
             android:screenOrientation="portrait" >
         </activity>
         <activity
@@ -418,6 +423,10 @@
         <activity
             android:name="com.entboost.im.setting.CheckVersionActivity"
             android:label="@string/title_activity_info_check_version" >
+        </activity>
+        <activity
+            android:name="com.entboost.im.setting.SecuritySettingActivity"
+            android:label="@string/title_activity_info_security_setting" >
         </activity>
         
     </application>

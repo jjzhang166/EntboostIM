@@ -14,6 +14,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.entboost.im.R;
+import com.entboost.im.comparator.ContactGroupComparator;
 
 public class ContactGroupSelectAdapter extends BaseAdapter {
 	private Context mContext;
@@ -45,8 +46,11 @@ public class ContactGroupSelectAdapter extends BaseAdapter {
 
 	public void setInput(List<ContactGroup> groups) {
 		this.groups.clear();
-		Collections.sort(groups);
-		this.groups.addAll(groups);
+		
+		if (groups!=null) {
+			Collections.sort(groups, new ContactGroupComparator());
+			this.groups.addAll(groups);
+		}
 	}
 
 	private class GroupViewHolder {

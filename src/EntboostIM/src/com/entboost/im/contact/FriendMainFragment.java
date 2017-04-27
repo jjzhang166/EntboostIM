@@ -1,5 +1,7 @@
 package com.entboost.im.contact;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import net.yunim.service.EntboostCache;
@@ -24,6 +26,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
+import android.widget.ExpandableListView.OnGroupCollapseListener;
 import android.widget.ExpandableListView.OnGroupExpandListener;
 import android.widget.TextView;
 
@@ -31,55 +34,65 @@ import com.entboost.handler.HandlerToolKit;
 import com.entboost.im.R;
 import com.entboost.im.base.EbFragment;
 import com.entboost.im.chat.ChatActivity;
+import com.entboost.im.comparator.DepartmentInfoComparator;
+import com.entboost.im.comparator.PersonGroupInfoComparator;
 import com.entboost.im.group.DepartmentListActivity;
 import com.entboost.im.group.GroupAdapter;
 import com.entboost.im.group.MemberInfoActivity;
 
 public class FriendMainFragment extends EbFragment {
+	
+	private static String LONG_TAG = FriendMainFragment.class.getName();
 
 	private ContactAdapter friendAdapter;
 
 	private ExpandableListView contactListView;
-
-	private int selectPage = 0;
-	private static int SELECTPAGE_CONTACT = 0;
-	private static int SELECTPAGE_GROUP = 1;
-	private static int SELECTPAGE_MYDEPARTMENT = 2;
-	private static int SELECTPAGE_ENT = 3;
-
+	
+	//定义值-通知刷新指定分页面
+	public final static int NotifyChangeNone = 0x0;
+	public final static int NotifyChangeContact =	0x1;
+	public final static int NotifyChangeGroup =	0x2;
+	public final static int NotifyChangeMyDepartment = 0x4;
+	public final static int NotifyChangeEnt= 0x8;
+	public final static int NotifyChangeAll = NotifyChangeContact|NotifyChangeGroup|NotifyChangeMyDepartment|NotifyChangeEnt;	
+	
+	//定义值-切换分页面
+	public final static int SELECTPAGE_CONTACT = NotifyChangeContact;
+	public final static int SELECTPAGE_GROUP = NotifyChangeGroup;
+	public final static int SELECTPAGE_MYDEPARTMENT = NotifyChangeMyDepartment;
+	public final static int SELECTPAGE_ENT = NotifyChangeEnt;
+	
+	private int selectPage = SELECTPAGE_MYDEPARTMENT;
+	
 	private View layout_contact;
 	private View layout_group;
 	private View layout_department;
 	private View layout_ent;
 
-	private OnChildClickListener contactListener;
-
-	private GroupAdapter<PersonGroupInfo> groupAdapter;
-
-	private OnChildClickListener childListener;
-
 	private TextView text_listname;
 
+	private GroupAdapter<PersonGroupInfo> groupAdapter;
 	private GroupAdapter<DepartmentInfo> departmentAdapter;
-
-	private OnGroupExpandListener departmentListener;
-
-	private ExpandableListView grouplistView;
-
-	private ExpandableListView departmentlistView;
-
-	private ExpandableListView entlistView;
-
 	private GroupAdapter<DepartmentInfo> entAdapter;
 
-	private OnGroupExpandListener personGroupListener;
-
-	private OnChildClickListener departmenChildtListener;
-
-	private OnGroupExpandListener entListener;
-
-	private OnChildClickListener entChildtListener;
-
+	private ExpandableListView grouplistView;
+	private ExpandableListView departmentlistView;
+	private ExpandableListView entlistView;
+	
+	/**
+	 * 暂存"个人群组"已展开的父节点
+	 */
+	private List<Long> groupExpandedList;
+	/**
+	 * 暂存"我的部门"已展开的父节点
+	 */
+	private List<Long> departmentExpandedList;	
+	/**
+	 * 暂存"企业部门"已展开的父节点
+	 */
+	private List<Long> entExpandedList;		
+	
+	
 	public void selectPageBtn(View v) {
 		initPageShow();
 		v.setBackgroundResource(R.drawable.bottom_line_green);
@@ -93,7 +106,7 @@ public class FriendMainFragment extends EbFragment {
 	@Override
 	public void onResume() {
 		super.onResume();
-		refreshPage(true);
+		refreshPage(false, selectPage);
 	}
 
 	private void initPageShow() {
@@ -106,31 +119,35 @@ public class FriendMainFragment extends EbFragment {
 		grouplistView.setVisibility(View.GONE);
 		departmentlistView.setVisibility(View.GONE);
 	}
-
+	
 	@Override
-	public void refreshPage(boolean switchView) {
-		super.refreshPage(switchView);
+	public void refreshPage(boolean switchView, int notifyChangeWhich) {
+		super.refreshPage(switchView, notifyChangeWhich);
 		
 		if (switchView) {
 			if (selectPage == SELECTPAGE_CONTACT) {
-				notifyContactChanged(true);
+				notifyContactChanged(switchView);
 			} else if (selectPage == SELECTPAGE_GROUP) {
-				notifyGroupChanged(true, null);
+				notifyGroupChanged(switchView, null);
 			} else if (selectPage == SELECTPAGE_MYDEPARTMENT) {
-				notifyDepartmentChanged(true, null);
+				notifyDepartmentChanged(switchView, null);
 			} else if (selectPage == SELECTPAGE_ENT) {
-				notifyEntChanged(true, null, false, false, false);
+				notifyEntChanged(switchView, null, false, false, false);
 			}
 		} else {
-			notifyContactChanged(false);
-			notifyGroupChanged(false, null);
-			notifyDepartmentChanged(false, null);
-			notifyEntChanged(false, null, false, false, false);
+			if ((notifyChangeWhich&NotifyChangeContact) == NotifyChangeContact)
+				notifyContactChanged(switchView);
+			if ((notifyChangeWhich&NotifyChangeGroup) == NotifyChangeGroup)
+				notifyGroupChanged(switchView, null);
+			if ((notifyChangeWhich&NotifyChangeMyDepartment) == NotifyChangeMyDepartment)
+				notifyDepartmentChanged(switchView, null);
+			if ((notifyChangeWhich&NotifyChangeEnt) == NotifyChangeEnt)
+				notifyEntChanged(switchView, null, false, false, false);
 		}
 	}
 
 	/**
-	 * 响应更新企业架构视图
+	 * 响应更新"企业架构"视图
 	 * @param switchView 是否把该视图切换至前台
 	 * @param groupid 群组编号
 	 * @param removeGroup 是否删除部门
@@ -139,7 +156,8 @@ public class FriendMainFragment extends EbFragment {
 	 */
 	public void notifyEntChanged(boolean switchView, Long groupid, boolean removeGroup, boolean updateGroup, boolean modifyMember) {
 		if (entAdapter!=null) {
-			List<DepartmentInfo> rootDepInfos = EntboostCache.getRootDepartmentInfos(); 
+			List<DepartmentInfo> rootDepInfos = EntboostCache.getRootDepartmentInfos();
+			Collections.sort(rootDepInfos, new DepartmentInfoComparator()); //排序
 			entAdapter.setInput(rootDepInfos);
 			
 			if (groupid!=null) {
@@ -167,6 +185,11 @@ public class FriendMainFragment extends EbFragment {
 					if (groupPosition>-1 && entlistView.isGroupExpanded(groupPosition))
 						entAdapter.setMembers(groupid, false);
 				}
+			} else {
+				//刷新已展开父节点的成员列表
+				for (Long depCode : entExpandedList) {
+					entAdapter.setMembers(depCode, true);
+				}
 			}
 			
 			entAdapter.notifyDataSetChanged();
@@ -185,13 +208,26 @@ public class FriendMainFragment extends EbFragment {
 		}
 	}
 
+	/**
+	 * 响应更新"个人群组"视图
+	 * @param switchView 是否把该视图切换至前台
+	 * @param groupid 群组编号，用于判断是否展开该群组
+	 */
 	public void notifyGroupChanged(boolean switchView, Long groupid) {
 		if (groupAdapter!=null) {
-			groupAdapter.setInput(EntboostCache.getPersonGroups());
+			List<PersonGroupInfo> groups = EntboostCache.getPersonGroups();
+			Collections.sort(groups, new PersonGroupInfoComparator()); //排序
+			groupAdapter.setInput(groups);
+			
 			if (groupid!=null) {
 				int groupPosition = groupAdapter.getGroupPosition(groupid);
 				if (groupPosition>-1 && grouplistView.isGroupExpanded(groupPosition))
 					groupAdapter.setMembers(groupid, false);
+			} else {
+				//刷新已展开父节点的成员列表
+				for (Long depCode : groupExpandedList) {
+					groupAdapter.setMembers(depCode, false);
+				}
 			}
 			
 			groupAdapter.notifyDataSetChanged();
@@ -203,13 +239,26 @@ public class FriendMainFragment extends EbFragment {
 		}
 	}
 
+	/**
+	 * 响应更新"我的部门"视图
+	 * @param switchView 是否把该视图切换至前台
+	 * @param groupid 部门编号，用于判断是否展开该部门
+	 */
 	public void notifyDepartmentChanged(boolean switchView, Long groupid) {
 		if (departmentAdapter!=null) {
-			departmentAdapter.setInput(EntboostCache.getMyDepartments());
+			List<DepartmentInfo> deps = EntboostCache.getMyDepartments();
+			Collections.sort(deps, new DepartmentInfoComparator()); //排序
+			departmentAdapter.setInput(deps);
+			
 			if (groupid!=null) {
 				int groupPosition = departmentAdapter.getGroupPosition(groupid);
 				if (groupPosition>-1 && departmentlistView.isGroupExpanded(groupPosition))
 					departmentAdapter.setMembers(groupid, false);
+			} else {
+				//刷新已展开父节点的成员列表
+				for (Long depCode : departmentExpandedList) {
+					departmentAdapter.setMembers(depCode, false);
+				}
 			}
 			
 			departmentAdapter.notifyDataSetChanged();
@@ -221,6 +270,10 @@ public class FriendMainFragment extends EbFragment {
 		}
 	}
 
+	/**
+	 * 响应更新"联系人"视图
+	 * @param switchView 是否把该视图切换至前台
+	 */
 	public void notifyContactChanged(boolean switchView) {
 		if (friendAdapter!=null) {
 			friendAdapter.initFriendList(EntboostCache.getContactGroups(), EntboostCache.getContactInfos());
@@ -244,6 +297,7 @@ public class FriendMainFragment extends EbFragment {
 	private void initEnt(final View view) {
 		entlistView = (ExpandableListView) view.findViewById(R.id.entlist);
 		entAdapter = new GroupAdapter<DepartmentInfo>(view.getContext(), entlistView);
+		entExpandedList = new ArrayList<Long>();
 		
 		//设置企业架构人数显示模式
 		AppAccountInfo appInfo = EntboostCache.getAppInfo();
@@ -251,14 +305,17 @@ public class FriendMainFragment extends EbFragment {
 				!= AppAccountInfo.SYSTEM_SETTING_VALUE_DISABLE_STATSUB_GROUP_MEMBER)
 			entAdapter.setCalculateSubDepartment(true);
 		
-		//展开事件监听
-		entListener = new ExpandableListView.OnGroupExpandListener() {
+		//展开父节点事件
+		OnGroupExpandListener groupExpandListener = new ExpandableListView.OnGroupExpandListener() {
 			@Override
 			public void onGroupExpand(final int groupPosition) {
 				final GroupInfo group = (GroupInfo) entAdapter.getGroup(groupPosition);
-				final long depCode = group.getDep_code();
+				final Long depCode = group.getDep_code();
+				entExpandedList.add(depCode);
 				entAdapter.setLoading(depCode, true);
-				EntboostUM.loadMembers(group.getDep_code(), new LoadAllMemberListener() {
+				
+				//加载成员列表
+				EntboostUM.loadMembers(depCode, new LoadAllMemberListener() {
 					@Override
 					public void onFailure(int code, final String errMsg) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
@@ -285,8 +342,17 @@ public class FriendMainFragment extends EbFragment {
 			}
 		};
 		
-		//点击成员事件监听
-		entChildtListener = new ExpandableListView.OnChildClickListener() {
+		//折叠父节点事件
+		OnGroupCollapseListener groupCollapseListener = new ExpandableListView.OnGroupCollapseListener() {
+			@Override
+			public void onGroupCollapse(int groupPosition) {
+				final GroupInfo group = (GroupInfo) entAdapter.getGroup(groupPosition);
+				entExpandedList.remove(group.getDep_code());
+			}
+		};
+		
+		//点击子节点事件
+		OnChildClickListener childClickListener = new ExpandableListView.OnChildClickListener() {
 			@Override
 			public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
 				Object obj = entAdapter.getChild(groupPosition, childPosition);
@@ -301,7 +367,7 @@ public class FriendMainFragment extends EbFragment {
 						} else {
 							Intent intent = new Intent(view.getContext(), ChatActivity.class);
 							intent.putExtra(ChatActivity.INTENT_TITLE, memberInfo.getUsername());
-							intent.putExtra(ChatActivity.INTENT_UID, memberInfo.getEmp_uid());
+							intent.putExtra(ChatActivity.INTENT_TOID, memberInfo.getEmp_uid());
 							startActivity(intent);
 						}
 					}
@@ -317,20 +383,27 @@ public class FriendMainFragment extends EbFragment {
 			}
 		};
 		entlistView.setAdapter(entAdapter);
-		entlistView.setOnGroupExpandListener(entListener);
-		entlistView.setOnChildClickListener(entChildtListener);
+		entlistView.setOnGroupExpandListener(groupExpandListener);
+		entlistView.setOnChildClickListener(childClickListener);
+		entlistView.setOnGroupCollapseListener(groupCollapseListener);
 	}
 
 	//初始化“我的部门”
 	private void initMyDepartment(final View view) {
 		departmentlistView = (ExpandableListView) view.findViewById(R.id.departmentlist);
 		departmentAdapter = new GroupAdapter<DepartmentInfo>(view.getContext(), departmentlistView);
-		departmentListener = new ExpandableListView.OnGroupExpandListener() {
+		departmentExpandedList = new ArrayList<Long>();
+		
+		//展开父节点事件
+		OnGroupExpandListener groupExpandListener = new ExpandableListView.OnGroupExpandListener() {
 			@Override
 			public void onGroupExpand(final int groupPosition) {
 				final GroupInfo group = (GroupInfo) departmentAdapter.getGroup(groupPosition);
-				final long depCode = group.getDep_code();
+				final Long depCode = group.getDep_code();
+				departmentExpandedList.add(depCode);
 				departmentAdapter.setLoading(depCode, true);
+				
+				//加载成员列表
 				EntboostUM.loadMembers(depCode, new LoadAllMemberListener() {
 					@Override
 					public void onFailure(int code, final String errMsg) {
@@ -359,7 +432,17 @@ public class FriendMainFragment extends EbFragment {
 			}
 		};
 		
-		departmenChildtListener = new ExpandableListView.OnChildClickListener() {
+		//折叠父节点事件
+		OnGroupCollapseListener groupCollapseListener = new ExpandableListView.OnGroupCollapseListener() {
+			@Override
+			public void onGroupCollapse(int groupPosition) {
+				final GroupInfo group = (GroupInfo) departmentAdapter.getGroup(groupPosition);
+				departmentExpandedList.remove(group.getDep_code());
+			}
+		};
+		
+		//点击子节点事件
+		OnChildClickListener childClickListener = new ExpandableListView.OnChildClickListener() {
 			@Override
 			public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
 				Object obj = departmentAdapter.getChild(groupPosition, childPosition);
@@ -373,7 +456,7 @@ public class FriendMainFragment extends EbFragment {
 					} else {
 						Intent intent = new Intent(view.getContext(), ChatActivity.class);
 						intent.putExtra(ChatActivity.INTENT_TITLE, memberInfo.getUsername());
-						intent.putExtra(ChatActivity.INTENT_UID, memberInfo.getEmp_uid());
+						intent.putExtra(ChatActivity.INTENT_TOID, memberInfo.getEmp_uid());
 						startActivity(intent);
 					}
 				}
@@ -381,21 +464,28 @@ public class FriendMainFragment extends EbFragment {
 			}
 		};
 		departmentlistView.setAdapter(departmentAdapter);
-		departmentlistView.setOnChildClickListener(departmenChildtListener);
-		departmentlistView.setOnGroupExpandListener(departmentListener);
+		departmentlistView.setOnChildClickListener(childClickListener);
+		departmentlistView.setOnGroupExpandListener(groupExpandListener);
+		departmentlistView.setOnGroupCollapseListener(groupCollapseListener);
 	}
 
 	//初始化“个人群组”
 	private void initGroup(final View view) {
 		grouplistView = (ExpandableListView) view.findViewById(R.id.grouplist);
 		groupAdapter = new GroupAdapter<PersonGroupInfo>(view.getContext(), grouplistView);
-		personGroupListener = new ExpandableListView.OnGroupExpandListener() {
+		groupExpandedList = new ArrayList<Long>();
+		
+		//展开父节点事件
+		OnGroupExpandListener groupExpandListener = new ExpandableListView.OnGroupExpandListener() {
 			@Override
 			public void onGroupExpand(final int groupPosition) {
 				final GroupInfo group = (GroupInfo) groupAdapter.getGroup(groupPosition);
-				final long depCode = group.getDep_code();
+				final Long depCode = group.getDep_code();
+				groupExpandedList.add(depCode);
 				groupAdapter.setLoading(depCode, true);
-				EntboostUM.loadMembers(group.getDep_code(), new LoadAllMemberListener() {
+				
+				//加载成员列表
+				EntboostUM.loadMembers(depCode, new LoadAllMemberListener() {
 					@Override
 					public void onFailure(int code, final String errMsg) {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
@@ -422,7 +512,17 @@ public class FriendMainFragment extends EbFragment {
 			}
 		};
 		
-		childListener = new ExpandableListView.OnChildClickListener() {
+		//折叠父节点事件
+		OnGroupCollapseListener groupCollapseListener = new ExpandableListView.OnGroupCollapseListener() {
+			@Override
+			public void onGroupCollapse(int groupPosition) {
+				final GroupInfo group = (GroupInfo) groupAdapter.getGroup(groupPosition);
+				groupExpandedList.remove(group.getDep_code());
+			}
+		};
+		
+		//点击子节点事件
+		OnChildClickListener childClickListener = new ExpandableListView.OnChildClickListener() {
 			@Override
 			public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
 				Object obj = groupAdapter.getChild(groupPosition, childPosition);
@@ -436,7 +536,7 @@ public class FriendMainFragment extends EbFragment {
 					} else {
 						Intent intent = new Intent(view.getContext(), ChatActivity.class);
 						intent.putExtra(ChatActivity.INTENT_TITLE, memberInfo.getUsername());
-						intent.putExtra(ChatActivity.INTENT_UID, memberInfo.getEmp_uid());
+						intent.putExtra(ChatActivity.INTENT_TOID, memberInfo.getEmp_uid());
 						startActivity(intent);
 					}
 				}
@@ -445,15 +545,18 @@ public class FriendMainFragment extends EbFragment {
 		};
 		
 		grouplistView.setAdapter(groupAdapter);
-		grouplistView.setOnChildClickListener(childListener);
-		grouplistView.setOnGroupExpandListener(personGroupListener);
+		grouplistView.setOnChildClickListener(childClickListener);
+		grouplistView.setOnGroupExpandListener(groupExpandListener);
+		grouplistView.setOnGroupCollapseListener(groupCollapseListener);
 	}
 	
 	//初始化“我的好友”
 	private void initContactView(View view) {
 		contactListView = (ExpandableListView) view.findViewById(R.id.friendlist);
 		friendAdapter = new ContactAdapter(view.getContext(), contactListView);
-		contactListener = new ExpandableListView.OnChildClickListener() {
+		
+		//点击子节点事件
+		OnChildClickListener contactListener = new ExpandableListView.OnChildClickListener() {
 			@Override
 			public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
 				Object obj = friendAdapter.getChild(groupPosition, childPosition);
@@ -470,7 +573,7 @@ public class FriendMainFragment extends EbFragment {
 						name = mi.getContact();
 					}
 					intent.putExtra(ChatActivity.INTENT_TITLE, name);
-					intent.putExtra(ChatActivity.INTENT_UID, mi.getCon_uid());
+					intent.putExtra(ChatActivity.INTENT_TOID, mi.getCon_uid());
 					startActivity(intent);
 				}
 				return true;
@@ -500,7 +603,7 @@ public class FriendMainFragment extends EbFragment {
 			public void onClick(View v) {
 				selectPage = SELECTPAGE_CONTACT;
 				selectPageBtn(v);
-				refreshPage(true);
+				refreshPage(true, NotifyChangeNone);
 			}
 		});
 		
@@ -509,7 +612,7 @@ public class FriendMainFragment extends EbFragment {
 			public void onClick(View v) {
 				selectPage = SELECTPAGE_GROUP;
 				selectPageBtn(v);
-				refreshPage(true);
+				refreshPage(true, NotifyChangeNone);
 			}
 		});
 		
@@ -518,7 +621,8 @@ public class FriendMainFragment extends EbFragment {
 			public void onClick(View v) {
 				selectPage = SELECTPAGE_MYDEPARTMENT;
 				selectPageBtn(v);
-				refreshPage(true);
+				refreshPage(true, NotifyChangeNone);
+				
 				EntboostUM.loadEnterprise(new LoadEnterpriseListener() {
 					@Override
 					public void onFailure(int code, String errMsg) {
@@ -534,7 +638,7 @@ public class FriendMainFragment extends EbFragment {
 						HandlerToolKit.runOnMainThreadAsync(new Runnable() {
 							@Override
 							public void run() {
-								refreshPage(true);
+								refreshPage(true, NotifyChangeNone);
 							}
 						});
 					}
@@ -547,7 +651,7 @@ public class FriendMainFragment extends EbFragment {
 			public void onClick(View v) {
 				selectPage = SELECTPAGE_ENT;
 				selectPageBtn(v);
-				refreshPage(true);
+				refreshPage(true, NotifyChangeNone);
 			}
 		});
 		
@@ -555,9 +659,12 @@ public class FriendMainFragment extends EbFragment {
 		initGroup(view);
 		initMyDepartment(view);
 		initEnt(view);
+		
+		//默认切换至"我的部门"页面
 		selectPage = SELECTPAGE_MYDEPARTMENT;
 		selectPageBtn(layout_department);
-		friendAdapter.notifyDataSetChanged();
+		//refreshPage(false, NotifyChangeContact);
+		//friendAdapter.notifyDataSetChanged();
 		return view;
 	}
 }

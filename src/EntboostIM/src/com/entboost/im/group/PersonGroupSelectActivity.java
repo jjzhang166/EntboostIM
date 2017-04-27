@@ -1,6 +1,8 @@
 package com.entboost.im.group;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import net.yunim.service.EntboostCache;
@@ -20,6 +22,7 @@ import android.widget.ListView;
 import com.entboost.handler.HandlerToolKit;
 import com.entboost.im.R;
 import com.entboost.im.base.EbActivity;
+import com.entboost.im.comparator.PersonGroupInfoComparator;
 import com.entboost.ui.base.view.popmenu.PopMenuConfig;
 import com.entboost.ui.base.view.popmenu.PopMenuItem;
 import com.entboost.ui.base.view.popmenu.PopMenuItemOnClickListener;
@@ -37,7 +40,11 @@ public class PersonGroupSelectActivity extends EbActivity {
 		setAbContentView(R.layout.activity_person_group_select);
 		mAbPullListView = (ListView) findViewById(R.id.mListView);
 		personGroupSelectAdapter = new PersonGroupSelectAdapter(this);
-		personGroupSelectAdapter.setInput(EntboostCache.getPersonGroups());
+		
+		List<PersonGroupInfo> groups = EntboostCache.getPersonGroups();
+		Collections.sort(groups, new PersonGroupInfoComparator()); //排序
+		personGroupSelectAdapter.setInput(groups);
+		
 		mAbPullListView.setAdapter(personGroupSelectAdapter);
 		uid = getIntent().getLongExtra("uid", -1);
 		mAbPullListView.setOnItemClickListener(new OnItemClickListener() {

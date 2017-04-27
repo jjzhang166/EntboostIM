@@ -20,7 +20,6 @@ import net.yunim.service.listener.LoadAllMemberListener;
 import net.yunim.utils.YIResourceUtils;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -40,6 +39,8 @@ import com.entboost.Log4jLog;
 import com.entboost.handler.HandlerToolKit;
 import com.entboost.im.R;
 import com.entboost.im.chat.ChatActivity;
+import com.entboost.im.comparator.DepartmentInfoComparator;
+import com.entboost.im.comparator.MemberInfoComparator;
 import com.entboost.im.global.MyApplication;
 import com.entboost.im.global.UIUtils;
 import com.entboost.ui.utils.AbImageUtil;
@@ -54,7 +55,13 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 	private static String LONG_TAG = GroupAdapter.class.getName();
 	
 	private Context mContext;
-	private Map<Long, List<Comparable>> localGroupMemberInfos = new HashMap<Long, List<Comparable>>();
+	/**
+	 * 以部门(群组)编号为key，缓存"部门和成员"列表
+	 */
+	private Map<Long, List<Object>> localGroupMemberInfos = new HashMap<Long, List<Object>>();
+	/**
+	 * 部门(群组)列表
+	 */
 	private List<T> groups = new ArrayList<T>();
 	
 	private boolean selectMember; //是否选择人员视图
@@ -94,7 +101,7 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 	 * @param isLoading 是否正在加载
 	 */
 	public synchronized void setLoading(long depCode, boolean isLoading) {
-		Log4jLog.d(LONG_TAG, "group "+ depCode+", setLoading "+ isLoading);
+		//Log4jLog.d(LONG_TAG, "group "+ depCode+", setLoading "+ isLoading);
 		Long key = Long.valueOf(depCode);
 		if (isLoading) {
 			groupLoadings.put(key, isLoading);
@@ -133,18 +140,18 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 		this.groups.addAll(groups);
 	}
 
-	@Override
-	public void notifyDataSetChanged() {
-		for (List<Comparable> objs : localGroupMemberInfos.values()) {
-			Collections.sort(objs);
-		}
-		super.notifyDataSetChanged();
-	}
+//	@Override
+//	public void notifyDataSetChanged() {
+////		for (List<Object> objs : localGroupMemberInfos.values()) {
+////			Collections.sort(objs);
+////		}
+//		super.notifyDataSetChanged();
+//	}
 
 	//删除作为叶子的部门节点
 	public void removeDepartmentInfoLeafNode(Long groupid) {
-		for (List<Comparable> list: localGroupMemberInfos.values()) {
-			Iterator<Comparable> it = list.iterator();
+		for (List<Object> list: localGroupMemberInfos.values()) {
+			Iterator<Object> it = list.iterator();
 			while(it.hasNext()) {
 				Object obj = it.next();
 				if (obj instanceof DepartmentInfo) {
@@ -159,12 +166,13 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 	
 	public void setMembers(Long groupid, boolean hasNextGroup) {
 		this.localGroupMemberInfos.remove(groupid);
-		List<Comparable> temp = new ArrayList<Comparable>();
+		List<Object> temp = new ArrayList<Object>();
 		
 		//获取下级部门
 		if (hasNextGroup) {
 			List<DepartmentInfo> ndis = EntboostCache.getNextDepartmentInfos(groupid);
 			if (ndis != null) {
+				Collections.sort(ndis, new DepartmentInfoComparator());
 				temp.addAll(ndis);
 			}
 		}
@@ -172,6 +180,7 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 		//获取该部门下成员
 		List<MemberInfo> gis = EntboostCache.getGroupMemberInfos(groupid);
 		if (gis != null) {
+			Collections.sort(gis, new MemberInfoComparator());
 			temp.addAll(gis);
 		}
 		
@@ -181,9 +190,9 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 	
 	@Override
 	public Object getChild(int groupPosition, int childPosition) {
-		List<Comparable> members = localGroupMemberInfos.get(getGroupId(groupPosition));
-		if (members != null && members.size() > 0) {
-			return members.get(childPosition);
+		List<Object> objs = localGroupMemberInfos.get(getGroupId(groupPosition));
+		if (objs != null && objs.size() > 0) {
+			return objs.get(childPosition);
 		}
 		return null;
 	}
@@ -240,7 +249,9 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 					holder1.userImg.setImageBitmap(img);
 				}
 			} else {
-				ImageLoader.getInstance().loadImage(memberInfo.getHeadUrl(), new ImageLoadingListener() {
+				String t = memberInfo.getHeadUrl();
+				Log4jLog.d(LONG_TAG, t);
+				ImageLoader.getInstance().loadImage(t, MyApplication.getInstance().getUserImgOptions(), new ImageLoadingListener() {
 					@Override
 					public void onLoadingStarted(String arg0, View arg1) {
 					}
@@ -377,7 +388,7 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 						Intent intent = new Intent(GroupAdapter.this.mContext, ChatActivity.class);
 						intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 						intent.putExtra(ChatActivity.INTENT_TITLE, group.getDep_name());
-						intent.putExtra(ChatActivity.INTENT_UID, group.getDep_code());
+						intent.putExtra(ChatActivity.INTENT_TOID, group.getDep_code());
 						intent.putExtra(ChatActivity.INTENT_CHATTYPE, ChatActivity.CHATTYPE_GROUP);
 						GroupAdapter.this.mContext.startActivity(intent);
 					}
@@ -457,31 +468,27 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 
 	@Override
 	public int getChildrenCount(int groupPosition) {
-		List<Comparable> members = localGroupMemberInfos.get(getGroupId(groupPosition));
-		if (members != null) {
-			return members.size();
+		List<Object> objs = localGroupMemberInfos.get(getGroupId(groupPosition));
+		if (objs != null) {
+			return objs.size();
 		}
 		return 0;
 	}
-
-	/**
-	 * 获取指定组内所有成员
-	 * @param groupPosition 组位置 
-	 * @return
-	 */
-	private List<MemberInfo> getChildren(int groupPosition) {
-		List<MemberInfo> results = new ArrayList<MemberInfo>();
-		List<Comparable> list = localGroupMemberInfos.get(getGroupId(groupPosition));
-		if (list!=null) {
-			for (Object obj : list) {
-				if (obj instanceof MemberInfo) {
-					results.add((MemberInfo)obj);
-				}
-			}
-		}
-		
-		return results;
-	}
+	
+//	private List<MemberInfo> getChildren(int groupPosition) {
+//		List<MemberInfo> results = new ArrayList<MemberInfo>();
+//		List<Object> objs = localGroupMemberInfos.get(getGroupId(groupPosition));
+//		if (objs!=null) {
+//			for (Object obj : objs) {
+//				if (obj instanceof MemberInfo) {
+//					results.add((MemberInfo)obj);
+//				}
+//			}
+//		}
+//		
+//		return results;
+//	}
+	
 //	private int getMemberChildrenCount(int groupPosition) {
 //		List<Comparable> members = localGroupMemberInfos.get(getGroupId(groupPosition));
 //		int num = 0;
@@ -581,11 +588,11 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 			holder1.itemsProgress.setVisibility(View.GONE);
 		}
 		
+		
+		//折叠/展开标记
 		Context context = MyApplication.getInstance().getApplicationContext();
 		int indentify = context.getResources().getIdentifier(
 				context.getPackageName()+":drawable/"+"tree_type"+group.getType()+"_"+(isExpanded?"opened":"closed"), null, null);
-		
-		//折叠/展开标记
 		holder1.itemsHead.setImageResource(indentify);
 		//名称+人数
 		holder1.itemsText.setText(group.getDep_name() + createFormatedStrOfGroupCount(group));
@@ -653,7 +660,7 @@ public class GroupAdapter<T> extends BaseExpandableListAdapter {
 					Intent intent = new Intent(GroupAdapter.this.mContext, ChatActivity.class);
 					intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 					intent.putExtra(ChatActivity.INTENT_TITLE, group.getDep_name());
-					intent.putExtra(ChatActivity.INTENT_UID, group.getDep_code());
+					intent.putExtra(ChatActivity.INTENT_TOID, group.getDep_code());
 					intent.putExtra(ChatActivity.INTENT_CHATTYPE, ChatActivity.CHATTYPE_GROUP);
 					GroupAdapter.this.mContext.startActivity(intent);
 				}

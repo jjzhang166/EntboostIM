@@ -7,25 +7,31 @@ import net.yunim.service.entity.AppAccountInfo;
 import net.yunim.service.entity.ContactInfo;
 import net.yunim.service.listener.DelContactListener;
 import net.yunim.service.listener.EditContactListener;
+import net.yunim.utils.YIResourceUtils;
 
 import org.apache.commons.lang3.StringUtils;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.entboost.handler.HandlerToolKit;
 import com.entboost.im.R;
 import com.entboost.im.base.EbActivity;
 import com.entboost.im.chat.ChatActivity;
+import com.entboost.im.global.MyApplication;
 import com.entboost.im.global.UIUtils;
 import com.lidroid.xutils.ViewUtils;
 import com.lidroid.xutils.view.annotation.event.OnClick;
+import com.nostra13.universalimageloader.core.ImageLoader;
 
 public class ContactInfoActivity extends EbActivity {
 
@@ -49,7 +55,7 @@ public class ContactInfoActivity extends EbActivity {
 		findViewById(R.id.contact_username).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(ContactInfoActivity.this, ContactNameEditActivity.class);
+				Intent intent = new Intent(ContactInfoActivity.this, ContactTextEditActivity.class);
 				intent.putExtra("contact", contactInfo.getContact());
 				startActivity(intent);
 			}
@@ -106,40 +112,51 @@ public class ContactInfoActivity extends EbActivity {
 	}
 	
 	private void init() {
+		ImageView contact_head = (ImageView) findViewById(R.id.contact_head);
 		TextView username = (TextView) findViewById(R.id.contact_username);
 		TextView account = (TextView) findViewById(R.id.contact_account);
 		TextView conid = (TextView) findViewById(R.id.contact_id);
 		TextView conidlab = (TextView) findViewById(R.id.contact_id_lab);
 		TextView group = (TextView) findViewById(R.id.contact_group);
+		
 		TextView contact_tel = (TextView) findViewById(R.id.contact_tel);
 		TextView contact_phone = (TextView) findViewById(R.id.contact_phone);
 		TextView contact_email = (TextView) findViewById(R.id.contact_email);
 		TextView contact_job_title = (TextView) findViewById(R.id.contact_job_title);
 		TextView contact_company = (TextView) findViewById(R.id.contact_company);
+		
 		contactInfo = EntboostCache.getContactInfoById(con_id);
 		
 		if (contactInfo != null) {
+			// 设置头像，如果没有则设置为默认头像
+			Bitmap img = YIResourceUtils.getHeadBitmap(contactInfo.getHead_rid());
+			if (img != null) {
+				contact_head.setImageBitmap(img);
+			} else {
+				ImageLoader.getInstance().displayImage(contactInfo.getHeadUrl(), contact_head, MyApplication.getInstance().getUserImgOptions());
+			}
+			
 			account.setText(contactInfo.getContact());
 			if (contactInfo.getCon_uid() == null) {
 				conidlab.setVisibility(View.INVISIBLE);
 			} else {
 				conid.setText(contactInfo.getCon_uid() + "");
 			}
+			
 			username.setText(contactInfo.getName());
 			group.setText(contactInfo.getGroupName());
+			
 			contact_tel.setText(contactInfo.getTel());
-			if (contactInfo.getPhone() == null) {
-				contact_phone.setText("");
-			} else {
-				contact_phone.setText(contactInfo.getPhone() + "");
-			}
+			contact_phone.setText(contactInfo.getPhone());
 			contact_email.setText(contactInfo.getEmail());
 			contact_job_title.setText(contactInfo.getJob_title());
 			contact_company.setText(contactInfo.getCompany());
+			
 			if (contactInfo.getCon_uid() == null) {
 				View send_btn = findViewById(R.id.contact_send_btn);
 				send_btn.setVisibility(View.GONE);
 			}
+			
 			AppAccountInfo appInfo = EntboostCache.getAppInfo();
 			// 未验证
 			Button del_btn = (Button) findViewById(R.id.contact_del_btn);
@@ -152,6 +169,18 @@ public class ContactInfoActivity extends EbActivity {
 			} else {
 				del_btn.setText("删除联系人");
 			}
+			
+			//右箭头
+//			ImageView contactInfo_name_arrow = (ImageView) findViewById(R.id.contactInfo_name_arrow);
+//			contactInfo_name_arrow.setVisibility(View.VISIBLE);
+			Drawable drawable = getResources().getDrawable(R.drawable.a4040);
+			drawable.setBounds(0, 0, drawable.getMinimumWidth(), drawable.getMinimumHeight());
+			
+			contact_tel.setCompoundDrawables(null, null, drawable, null);
+			contact_phone.setCompoundDrawables(null, null, drawable, null);
+			contact_email.setCompoundDrawables(null, null, drawable, null);
+			contact_job_title.setCompoundDrawables(null, null, drawable, null);
+			contact_company.setCompoundDrawables(null, null, drawable, null);
 		}
 	}
 
@@ -182,7 +211,7 @@ public class ContactInfoActivity extends EbActivity {
 				name = contactInfo.getContact();
 			}
 			intent.putExtra(ChatActivity.INTENT_TITLE, name);
-			intent.putExtra(ChatActivity.INTENT_UID, contactInfo.getCon_uid());
+			intent.putExtra(ChatActivity.INTENT_TOID, contactInfo.getCon_uid());
 			startActivity(intent);
 		}
 	}
@@ -221,4 +250,46 @@ public class ContactInfoActivity extends EbActivity {
 		});
 
 	}
+	
+	//跳转到编辑界面
+	private void editContactText(String fieldName, String hint) {
+		Intent intent = new Intent(this, ContactTextEditActivity.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		intent.putExtra("con_id", con_id);
+		intent.putExtra(ContactTextEditActivity.INTENT_FIELD_NAME, fieldName);
+		if (hint!=null)
+			intent.putExtra(ContactTextEditActivity.INTENT_HINT, hint);
+		
+		this.startActivity(intent);
+	}
+	
+	@OnClick(R.id.contact_name_layout)
+	public void editContactName(View view) {
+		editContactText("name", "不超过20字");
+	}
+	
+	@OnClick(R.id.contact_tel_layout)
+	public void editContactTel(View view) {
+		editContactText("tel", null);
+	}
+	
+	@OnClick(R.id.contact_phone_layout)
+	public void editContactPhone(View view) {
+		editContactText("phone", null);
+	}
+	
+	@OnClick(R.id.contact_email_layout)
+	public void editContactEmail(View view) {
+		editContactText("email", null);
+	}
+	
+	@OnClick(R.id.contact_job_title_layout)
+	public void editContactJobTitle(View view) {
+		editContactText("job_title", null);
+	}
+	
+	@OnClick(R.id.contact_company_layout)
+	public void editContactCompany(View view) {
+		editContactText("company", null);
+	}	
 }

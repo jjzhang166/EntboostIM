@@ -49,11 +49,11 @@ public class ThirdPartyPushHelper {
 	/**
 	 * 小米推送平台申请的APPID
 	 */
-	public static String XIAOMI_PushAppId = "111111"; //注意：填入你自己应用所申请的APPID
+	public static String XIAOMI_PushAppId = "22222"; //注意：填入你自己应用所申请的APPID
 	/**
 	 * 小米推送平台申请的APPKey
 	 */
-	public static String XIAOMI_PushAppKey = "222222"; //注意：填入你自己应用所申请的APPKey
+	public static String XIAOMI_PushAppKey = "33333"; //注意：填入你自己应用所申请的APPKey
 	
 	/**
 	 * 准备接入第三方推送平台

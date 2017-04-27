@@ -57,6 +57,7 @@ public class EditGroupNameActivity extends EbActivity {
 		super.onCreate(savedInstanceState);
 		setAbContentView(R.layout.activity_edit_group_name);
 		ViewUtils.inject(this);
+		
 		depid = getIntent().getLongExtra("depid", -1);
 		groupInfo = EntboostCache.getGroup(depid);
 		groupname_username.setText(groupInfo.getDep_name());

@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.entboost.im.R;
+import com.entboost.im.comparator.DepartmentInfoComparator;
 
 public class DepartmentAdapter extends BaseAdapter {
 	private Context mContext;
@@ -30,7 +31,7 @@ public class DepartmentAdapter extends BaseAdapter {
 	}
 
 	public void setInput(Vector<DepartmentInfo> groups) {
-		Collections.sort(groups);
+		Collections.sort(groups, new DepartmentInfoComparator());
 		this.groups = groups;
 	}
 

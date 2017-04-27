@@ -91,6 +91,14 @@ public class SearchContactAdapter extends BaseAdapter {
 				} else {
 					ImageLoader.getInstance().displayImage(memberInfo.getHeadUrl(), holder.userImg, MyApplication.getInstance().getUserImgOptions());
 				}
+			} else if (obj.getType() == SearchResultInfo.TYPE_CONTACTCHAT) {
+				ContactInfo contactInfo = (ContactInfo) obj.getObj();
+				Bitmap img = YIResourceUtils.getHeadBitmap(contactInfo.getHead_rid());
+				if (img != null) {
+					holder.userImg.setImageBitmap(img);
+				} else {
+					ImageLoader.getInstance().displayImage(contactInfo.getHeadUrl(), holder.userImg, MyApplication.getInstance().getUserImgOptions());
+				}
 			}
 			
 			holder.userImg.setOnClickListener(new View.OnClickListener() {

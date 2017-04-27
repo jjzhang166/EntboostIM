@@ -2,7 +2,6 @@ package com.entboost.im.message;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import net.yunim.service.entity.BroadcastMessage;
 import android.content.Context;

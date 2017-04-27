@@ -267,16 +267,15 @@ public class DefaultUserInfoActivity extends EbActivity {
 	@OnClick(R.id.send_btn)
 	public void sendMsg(View view) {
 		//寻找已打开的聊天会话界面，并关闭它和在它之上的Activity
-		Activity activity = MyActivityManager.getInstance().getActivity(ChatActivity.class.getName());
-		if (activity!=null) {
-			MyActivityManager.getInstance().popToActivity(ChatActivity.class.getName());
+		Activity activity = MyActivityManager.getInstance().popToActivity(ChatActivity.class.getName());
+		if (activity!=null)
 			MyActivityManager.getInstance().popOneActivity(activity);
-		}
+		
 		
 		// 打开聊天会话界面
 		Intent intent = new Intent(this, ChatActivity.class);
 		intent.putExtra(ChatActivity.INTENT_TITLE, na.getText());
-		intent.putExtra(ChatActivity.INTENT_UID, Long.valueOf(uid.getText().toString()));
+		intent.putExtra(ChatActivity.INTENT_TOID, Long.valueOf(uid.getText().toString()));
 		this.startActivity(intent);
 	}
 }

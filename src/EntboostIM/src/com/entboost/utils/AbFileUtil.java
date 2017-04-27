@@ -42,6 +42,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapFactory.Options;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.StatFs;
@@ -328,7 +329,23 @@ public class AbFileUtil {
 		}
         return  b;
      }
-	    
+	 
+     /**
+      * 把字节数组转换为图片对象
+      * @param bytes 字节数组
+      * @param options 选项
+      * @return 图片对象
+      */
+     public static Bitmap getBitmapFromBytes(byte[] bytes, Options options) {
+	     if (bytes != null) {
+             if (options != null)
+            	 return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+             else
+            	 return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+	     }
+	     return null;
+     }
+     
 	/**
 	 * 描述：根据URL从互连网获取图片.
 	 * @param url 要下载文件的网络地址

@@ -10,6 +10,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 
 import com.entboost.im.R;
+import com.entboost.im.contact.FriendMainFragment;
 import com.entboost.im.global.OtherUtils;
 import com.entboost.ui.base.view.sliding.AbBottomTabView;
 import com.entboost.ui.base.view.titlebar.AbTitleBar;
@@ -58,7 +59,7 @@ public class EbMainActivity extends EbActivity {
 			public void onPageSelected(int index) {
 				mBottomTabView.setCurrentItem(index);
 				EbFragment fragment = (EbFragment) mBottomTabView.getItemView(index);
-				fragment.refreshPage(true);
+				fragment.refreshPage(true, FriendMainFragment.NotifyChangeNone);
 			}
 		};
 		mBottomTabView.setOnPageChangeListener(mListener);

@@ -46,6 +46,7 @@ import com.entboost.global.AbConstant;
 import com.entboost.handler.HandlerToolKit;
 import com.entboost.im.R;
 import com.entboost.im.base.EbActivity;
+import com.entboost.im.comparator.DictComparator;
 import com.entboost.im.global.MyApplication;
 import com.entboost.im.group.SelectHeadImgActivity;
 import com.entboost.im.ui.SegmentedRadioGroup;
@@ -378,8 +379,10 @@ public class UserInfoActivity extends EbActivity {
 							@Override
 							public void run() {
 								provinces = new Vector<Dict>(); 
-								if (pdicts!=null)
+								if (pdicts!=null) {
+									Collections.sort(pdicts, new DictComparator()); //排序
 									provinces.addAll(pdicts);
+								}
 								
 								updateProvince(province, provinces);
 								
@@ -401,10 +404,12 @@ public class UserInfoActivity extends EbActivity {
 												@Override
 												public void run() {
 													citys = new Vector<Dict>();
-													if (cdicts!=null)
+													if (cdicts!=null) {
+														Collections.sort(cdicts, new DictComparator()); //排序
 														citys.addAll(cdicts);
+													}
 													
-													DictAdapter adapter = new DictAdapter(citys,UserInfoActivity.this);
+													DictAdapter adapter = new DictAdapter(citys, UserInfoActivity.this);
 													city.setViewAdapter(adapter);
 													city.setVisibleItems(10);
 												}
@@ -449,8 +454,10 @@ public class UserInfoActivity extends EbActivity {
 							@Override
 							public void run() {
 								citys = new Vector<Dict>();
-								if (cdicts!=null)
+								if (cdicts!=null) {
+									Collections.sort(cdicts, new DictComparator()); //排序
 									citys.addAll(cdicts);
+								}
 								
 								DictAdapter adapter = new DictAdapter(citys,UserInfoActivity.this);
 								city.setViewAdapter(adapter);
@@ -483,6 +490,8 @@ public class UserInfoActivity extends EbActivity {
 					public void run() {
 						countries = new Vector<Dict>();
 						if (dicts!=null) {
+							Collections.sort(dicts, new DictComparator()); //排序
+							
 							List<Integer> keepedCountry = new ArrayList<Integer>();
 							Integer[] keepedIds = {156/*, 840, 276, 826, 250, 643*/}; // 156中国 158中国台湾 344香港 840美国 276德国 826英国 643俄罗斯 250法国 446澳门
 							Collections.addAll(keepedCountry, keepedIds);
@@ -525,8 +534,10 @@ public class UserInfoActivity extends EbActivity {
 									@Override
 									public void run() {
 										provinces = new Vector<Dict>();
-										if (pdicts!=null)
+										if (pdicts!=null) {
+											Collections.sort(pdicts, new DictComparator()); //排序
 											provinces.addAll(pdicts);
+										}
 										
 										if (provinces.size() == 0) {
 											initWheel(dialog_exitView, dCountry);
@@ -537,6 +548,7 @@ public class UserInfoActivity extends EbActivity {
 											} else {
 												provineId = provinces.get(0).getDict_id();
 											}
+											
 											EntboostUM.loadDict(provineId, new LoadDictListener() {
 												@Override
 												public void onFailure(int code, String errMsg) {
@@ -555,8 +567,10 @@ public class UserInfoActivity extends EbActivity {
 														@Override
 														public void run() {
 															citys = new Vector<Dict>();
-															if (cdicts!=null)
+															if (cdicts!=null) {
+																Collections.sort(cdicts, new DictComparator()); //排序
 																citys.addAll(cdicts);
+															}
 															
 															initWheel(dialog_exitView, dCountry);
 														}

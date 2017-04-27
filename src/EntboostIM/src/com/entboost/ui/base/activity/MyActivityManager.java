@@ -56,25 +56,28 @@ public class MyActivityManager {
 	}
 	
 	/**
-	 * 弹出在某个activity之上的activity
+	 * 弹出在某个activity之上的所有activity
 	 * @param className
+	 * @return
 	 */
-	public void popToActivity(String className) {
+	public Activity popToActivity(String className) {
+		Activity activity = null;
 		Activity existActivity = getActivity(className);
+		
 		if (existActivity!=null) {
-			boolean found = false;
-	    	Iterator<Activity> it = activityStack.iterator();
-	    	while (it.hasNext()) {
-	    		Activity activity = (Activity)it.next();
-	    		if (existActivity==activity)
-	    			found = true;
-	    		
-	    		if (found) {
-	    			it.remove();
-	    			activity.finish();
-	    		}
-	    	}
+			do {
+				activity = activityStack.peek();
+				if (activity!=existActivity) {
+					activityStack.pop();
+					activity.finish();
+					continue;
+				}
+				
+				break;
+			} while(!activityStack.empty());
 		}
+		
+		return existActivity;
 	}
 	
     /**
