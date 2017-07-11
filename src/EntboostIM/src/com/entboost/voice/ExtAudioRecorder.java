@@ -3,7 +3,9 @@ package com.entboost.voice;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
@@ -11,6 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaRecorder;
 import android.media.MediaRecorder.AudioSource;
 
@@ -599,34 +603,84 @@ public class ExtAudioRecorder {
 		result.release();
 	}
 
+	//缓存音频播放器对象
 	public static Map<String, MediaPlayer> mps = new ConcurrentHashMap<String, MediaPlayer>();
 
+	//释放音频播放器
+	private static void releasePlayer(MediaPlayer player) {
+		player.stop();
+		player.reset();
+		player.release();
+	}
+	//初始化音频播放器
+	private static void initPlayer(MediaPlayer player, String filePathName) {
+		try {
+			player.setDataSource(filePathName);
+			player.prepare();
+		} catch (IOException e) {
+			Log4jLog.e(LONG_TAG, e);
+		}
+	}
+	
+	/**
+	 * 播放音频文件
+	 * @param filePathName 音频文件绝对路径
+	 */
 	public static void play(String filePathName) {
 		if (StringUtils.isBlank(filePathName)) {
 			Log4jLog.e(LONG_TAG, "语音文件不存在！");
 			return;
 		}
+		
+		//释放缓存的音频播放器对象
+		if (mps.size()>1) {
+			Iterator<Entry<String,MediaPlayer>> it = mps.entrySet().iterator();
+			while (it.hasNext()) {
+				Entry<String,MediaPlayer> entry = it.next();
+				MediaPlayer player = entry.getValue();
+				releasePlayer(player);
+				it.remove();
+				Log4jLog.d(LONG_TAG, "release player: " + entry.getKey());
+			}
+		}
+		
+		MediaPlayer player;
 		if (mps.containsKey(filePathName)) {
-			mps.get(filePathName).stop();
-			mps.remove(filePathName);
-			return;
-		}
-		MediaPlayer player = new MediaPlayer();
-		try {
-			player.setDataSource(filePathName);
-			player.prepare();
-			player.start();
+			player = mps.get(filePathName);
+			if (player.isPlaying()) {
+				player.stop();
+				player.reset();
+				Log4jLog.d(LONG_TAG, "stop playing");
+				//初始化
+				initPlayer(player, filePathName);
+				return;
+			}
+		} else {
+			player = new MediaPlayer();
 			mps.put(filePathName, player);
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			
+			//监听播放完毕
+			player.setOnCompletionListener(new OnCompletionListener() {
+				@Override
+				public void onCompletion(MediaPlayer mp) {
+					Log4jLog.d(LONG_TAG, "play end");
+				}
+			});
+			
+			//监听错误
+			player.setOnErrorListener(new OnErrorListener() {
+				@Override
+				public boolean onError(MediaPlayer mp, int what, int extra) {
+					Log4jLog.e(LONG_TAG, "media player error, what=" + what + ", extra=" + extra);
+					return true;
+				}
+			});
+			
+			//初始化
+			initPlayer(player, filePathName);
 		}
+		//执行播放
+		player.start();
 	}
 	
 	public static int byteToInt(byte[] b) { 

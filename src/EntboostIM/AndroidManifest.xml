@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.entboost.im"
     android:versionCode="1"
-    android:versionName="1.6.0.315" >
+    android:versionName="1.6.0.316" >
 
     <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="22" />
 	
@@ -234,11 +234,6 @@
         <activity
             android:name="com.entboost.im.contact.ContactDescriptionActivity"
             android:label="@string/title_activity_contact_description"
-            android:screenOrientation="portrait" >
-        </activity>
-        <activity
-            android:name="com.entboost.im.group.DepartmentActivity"
-            android:label="@string/title_activity_department"
             android:screenOrientation="portrait" >
         </activity>
         <activity
